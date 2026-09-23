@@ -1,4 +1,4 @@
-# Launch-Checkliste – Solar Technik BwM (Stand 23.9.2026)
+# Launch-Checkliste – Solar Technik BwM (Stand 23.9.2026, 2. Fassung)
 
 Unbeauftragter Entwurf nach der alten Seite solar-bwm.com (WordPress). 24 Seiten, statisch, Generator `_build.py`.
 
@@ -8,28 +8,30 @@ Unbeauftragter Entwurf nach der alten Seite solar-bwm.com (WordPress). 24 Seiten
 |---|---|
 | JS-Fehler | 0 auf allen 24 Seiten – Chromium und WebKit, je 1400 px und 390 px (Playwright, komplett durchgescrollt) |
 | Horizontales Scrollen | keins: scrollWidth = clientWidth auf allen Seiten, beide Engines, beide Größen |
-| Szene (Startseite) | 41 Schritte Desktop + 41 Schritte Handy (Chromium), 17 + 17 (WebKit) fotografiert: kein Text überlagert einen anderen, fester Ablauf Text raus → Blende → Text rein |
+| Szene (Startseite, 2. Fassung) | 33 Schritte Desktop + 33 Schritte Handy (Chromium), 17 Handy (WebKit): Karte mit Text blendet komplett aus, dann Blende, dann Karte mit neuem Text – nie zwei Texte, nie leere Karte |
 | Überlappende Texte | Leistungs-Schiene gefunden und behoben (alle Klemmen gleicher Weg, vordere zuerst); Kartenbeschriftungen verschoben (Maastricht, Stolberg, Lontzen), Foto überdeckte auf „Befestigung“ die Tabelle – behoben |
-| Ladegröße bis „load“ | Startseite Desktop 755 KB (Ziel < 900), Handy 324 KB (Ziel < 500) |
+| Ladegröße bis „load“ | Startseite Desktop 494 KB (Ziel < 900), Handy 345 KB (Ziel < 500) – Fotos unterhalb der Szene laden erst nach „load“, Handy bekommt die mittlere Fotogröße |
 | Formular | leer → „Bitte prüfen: Name, E-Mail, Einverständnis“; falsche Mail erkannt; gültig → danke.html; Vorbelegung per `?thema=`, `?dach=`, `?kwh=`, `?heizung=`, `?ww=`, `?notiz=` funktioniert; Honeypot `bot-field`; Netlify-Forms-Attribute gesetzt |
 | Werkzeuge | Steckbrief → Link ins Formular; Finder 13 Module → alle drei „zu klein“ + Hinweis; Hitze 60 °C → 355 W; Stückliste 8 × 2 → 32,8 m Schiene, 8 Stücke, 4 Verbinder, 8 End-, 28 Mittelklemmen (nachgerechnet); Nacht-Rechner 10 kWh / 500 W → 20 h |
 | Links intern | 0 kaputte Links und Sprungziele (#werkzeug, #klemmen, #schiene …) |
 | Links extern | jsDelivr (GSAP, ScrollTrigger, Lenis) 200 |
-| Reduzierte Bewegung | Szene wird statische Fotoreihe mit Bildunterschriften, kein Pin, kein Lenis; Reveals als 150-ms-Blende; Schichtaufbau fertig auseinandergezogen |
+| Reduzierte Bewegung | Szene wird statische Fotoreihe mit Bildunterschriften, kein Pin, kein Lenis; Reveals als 150-ms-Blende |
 | Meta | alle Titel ≤ 65, alle Beschreibungen ≤ 155 Zeichen, je Seite genau eine H1 |
 | Alt-Texte | alle `<img>` mit alt (Deko-Vorschaubilder im Menü leer) |
 | Canonical, OG, Twitter | auf allen Seiten, eigenes `img/og.jpg` 1200 × 630 |
 | JSON-LD | HomeAndConstructionBusiness auf allen Seiten, BreadcrumbList, FAQPage (faq.html), Article (3 Ratgeber) |
-| Favicon | `favicon.svg` (Schienenprofil) + `apple-touch-icon.png` 180 px |
+| Favicon | `favicon.svg` (Sonne über Modul) + `apple-touch-icon.png` 180 px |
 | sitemap.xml / robots.txt | 22 URLs (ohne danke/404), danke.html gesperrt |
 | 404 | eigene Seite, in netlify.toml hinterlegt |
 | Weiterleitungen | alle alten WordPress-Adressen in `netlify.toml` (dienstleistung, Produkt, module, befestigung, elektrokomponenten, wechselrichter, batterie-*, optimierer, referenzen, kontakt, kontakt-bwm, impressum, events) |
 | Sicherheits-Header | netlify.toml: CSP, HSTS, X-Frame-Options, nosniff, Referrer-, Permissions-Policy |
-| Cookies / Tracking | keine; Schriften lokal (Barlow), Karte erst per Klick (OpenStreetMap) → kein Cookie-Banner nötig |
+| Cookies / Tracking | keine; Schriften lokal (Figtree), Karte erst per Klick (OpenStreetMap) → kein Cookie-Banner nötig |
 | Analytics | bewusst keins |
-| Barrierefreiheit | Tastatur: Ausklappmenüs (Esc), Dachform-Tabs (Pfeiltasten), Lightbox (Pfeile, Esc, Fokusfalle), Handy-Menü (Fokusfalle); Fokus-Ringe; Kupfer #a8561d auf Weiß ≈ 5 : 1 (AA) |
+| Barrierefreiheit | Tastatur: Ausklappmenüs (Esc), Dachform-Tabs (Pfeiltasten), Lightbox (Pfeile, Esc, Fokusfalle), Handy-Menü (Fokusfalle); Fokus-Ringe; Bernstein #8a5800 auf Weiß ≈ 6 : 1 (AA), Knöpfe dunkle Schrift auf Sonnengelb ≈ 10 : 1 |
 
 ## Offen – vom Kunden zu klären
+
+0. **Branchen-Fotos sind Platzhalter** (Unsplash, siehe `img/BILDNACHWEIS.md`): Szene, Leistungen, Dachformen und Unterseiten-Köpfe zeigen keine BwM-Anlagen. Durch eigene, helle Fotos ersetzen (Dach, Montage, Zählerschrank, fertige Anlage). Die echten BwM-Fotos stehen bei Referenzen und im Fotostapel.
 
 1. **Einverständnis** von Malte Behrenswerth für den Entwurf und die Nutzung der Fotos (alle von solar-bwm.com). Das Schienenprofil-Foto ist im Original nur 513 px groß → schärfere Aufnahme erbitten.
 2. **E-Mail-Adresse**: alte Seite nennt `info@solar-bwm.com` (Impressum, Fuß) und `info@solar-bwm.de` (Kontakt BwM). Verwendet: .com – bestätigen.

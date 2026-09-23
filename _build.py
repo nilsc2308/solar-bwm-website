@@ -5,17 +5,14 @@ import json, os, math, html as H
 OUT = os.path.dirname(os.path.abspath(__file__)) + '/'
 DOMAIN = 'https://solar-bwm.com'
 TODAY = '2026-09-23'
-VER = '20260923-2'
+VER = '20260923-v2h'
 CO = dict(name='Solar Technik BwM', short='Solar BwM', person='Malte Behrenswerth', street='Schmalgraf 48', zip='4710', city='Lontzen',
           country='Belgien', tel='+49 1575 5232254', telh='+4915755232254', mail='info@solar-bwm.com', vat='BE 0768.628.988',
           lat='50.69998', lon='5.98361')
 
 # ---------- Zeichen ----------
-# Querschnitt der Montageschiene (40 x 40 mm) mit T-Nut oben und unten, 100er-Raster
-PROFILE = 'M0 0H38V8H28V24H72V8H62V0H100V100H62V92H72V76H28V92H38V100H0Z'
-PROFILE_HOLES = 'M8 8H20V92H8ZM80 8H92V92H80Z'
-MARK = f'<svg viewBox="-6 -6 112 112" aria-hidden="true"><path d="{PROFILE} {PROFILE_HOLES}" fill="currentColor" fill-rule="evenodd"/></svg>'
-LOGO = f'<span class="plate"><span class="mark">{MARK}</span><span class="wordmark"><b>Solar Technik BwM</b><i>Photovoltaik</i></span></span>'
+MARK = '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="20" r="11" fill="#f6b400"/><path d="M6 34h36l-4 10H10z" fill="#1d1d1f"/><path d="M17 34l-2 10M24 34v10M31 34l2 10M8 39h32" stroke="#fff" stroke-width="1.6"/></svg>'
+LOGO = f'<span class="mark">{MARK}</span><span class="wordmark"><b>Solar Technik <em>BwM</em></b><i>Photovoltaik im Dreiländereck</i></span>'
 ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>'
 TEL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.9 2z"/></svg>'
 MAIL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>'
@@ -33,6 +30,9 @@ DIMS['kran'] = (1024, 768, 640)
 DIMS['p-wechselrichter'] = (539, 702, 360)
 DIMS['p-datenblatt'] = (787, 1071, 400)
 DIMS['p-modul'] = (789, 1075, 400)
+for n, h in [('dach-vorher', 1280), ('daecher-region', 1080), ('freiflaeche', 1440), ('giebel-pv', 1282), ('haus-fertig', 1280), ('modul-tragen', 1280), ('module-himmel', 1280),
+             ('module-nah', 1280), ('montage-haende', 1280), ('sicherungskasten', 1440), ('steinhaus-pv', 865), ('wartung-module', 1280), ('ziegel-pv', 1440)]:
+    DIMS[n] = (1920, h, 900)
 SINGLE = {'p-bms': (355, 127), 'p-speicher': (355, 219), 'p-sensor': (231, 327)}
 
 
@@ -42,7 +42,9 @@ def pic(n, alt, sizes='100vw', lazy=True, cls='', late=False):
         w, h = SINGLE[n]
         return f'<img class="{cls}" src="img/{n}.webp" width="{w}" height="{h}" alt="{H.escape(alt)}" loading="lazy" decoding="async">'
     lw, lh, mw = DIMS[n]
-    src, ss = f'img/{n}-m.webp', f'img/{n}-m.webp {mw}w, img/{n}-l.webp {lw}w'
+    src, ss = f'img/{n}-m.webp', f'img/{n}-s.webp 480w, img/{n}-m.webp {mw}w, img/{n}-l.webp {lw}w'
+    if sizes.startswith('100vw'):
+        sizes = '(max-width: 700px) 300px, 100vw'  # Handy mit hoher Pixeldichte: mittlere Fassung reicht, spart Ladezeit
     c = f' class="{cls}"' if cls else ''
     if late:
         return f'<img{c} data-late data-src="{src}" data-srcset="{ss}" sizes="{sizes}" width="{lw}" height="{lh}" alt="{H.escape(alt)}" decoding="async">'
@@ -52,17 +54,17 @@ def pic(n, alt, sizes='100vw', lazy=True, cls='', late=False):
 
 # ---------- Seitenstruktur ----------
 SERVICES = [  # Datei, Titel, Einzeiler, Foto für das Menü
-    ('planung-beratung.html', 'Planung & Beratung', 'Dach, Verbrauch und Wünsche aufnehmen, die passende Anlage auslegen.', 'bruchsteinhaus'),
-    ('montage.html', 'Montage', 'Gestell, Schienen und Module auf Flachdach, Satteldach, Pultdach oder Wiese.', 'flachdach-reihen'),
-    ('anschliessen.html', 'Anschließen', 'Wechselrichter, Speicher und Energiezähler verbinden und in Betrieb nehmen.', 'blechdach'),
-    ('wartung.html', 'Wartung', 'Befestigung, Kabel und Ertrag prüfen, damit die Anlage Jahre läuft.', 'ziegeldach'),
+    ('planung-beratung.html', 'Planung & Beratung', 'Dach, Verbrauch und Wünsche aufnehmen, die passende Anlage auslegen.', 'daecher-region'),
+    ('montage.html', 'Montage', 'Gestell, Schienen und Module auf Flachdach, Satteldach, Pultdach oder Wiese.', 'montage-haende'),
+    ('anschliessen.html', 'Anschließen', 'Wechselrichter, Speicher und Energiezähler verbinden und in Betrieb nehmen.', 'sicherungskasten'),
+    ('wartung.html', 'Wartung', 'Befestigung, Kabel und Ertrag prüfen, damit die Anlage Jahre läuft.', 'wartung-module'),
 ]
 PRODUCTS = [
-    ('module.html', 'Module', 'JA Solar JAM72S10 mit 405 W, auf Wunsch andere Hersteller.', 'flachdach-hof'),
+    ('module.html', 'Module', 'JA Solar JAM72S10 mit 405 W, auf Wunsch andere Hersteller.', 'module-nah'),
     ('befestigung.html', 'Befestigung', 'Schiene, Dachhaken, Trapezblechschuh, End- und Mittelklemme.', 'dachhaken'),
-    ('wechselrichter.html', 'Wechselrichter', 'Einphasige Huawei SUN2000 mit 3, 3,68 und 4 kW.', 'blechdach-weit'),
-    ('speicher.html', 'Batteriespeicher', 'Huawei LUNA2000 mit Steuereinheit für den Strom am Abend.', 'backsteinhaus'),
-    ('energiezaehler.html', 'Energiezähler', 'Smart Power Sensor DTSU666-H misst Bezug und Einspeisung.', 'flachdach-ballast'),
+    ('wechselrichter.html', 'Wechselrichter', 'Einphasige Huawei SUN2000 mit 3, 3,68 und 4 kW.', 'module-himmel'),
+    ('speicher.html', 'Batteriespeicher', 'Huawei LUNA2000 mit Steuereinheit für den Strom am Abend.', 'giebel-pv'),
+    ('energiezaehler.html', 'Energiezähler', 'Smart Power Sensor DTSU666-H misst Bezug und Einspeisung.', 'steinhaus-pv'),
 ]
 TOOLS = [  # Seite, Frage, Werkzeug, Symbol (SVG-Pfade 32x32)
     ('planung-beratung.html', 'Was braucht BwM von mir für ein Angebot?', 'Anfrage-Steckbrief', '<rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 11h10M11 16h10M11 21h6"/>'),
@@ -120,18 +122,17 @@ def head(p):
 <meta property="og:image" content="{DOMAIN}/img/og.jpg">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#18213d">
+<meta name="theme-color" content="#ffffff">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="preload" href="fonts/barlow-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="preload" href="fonts/barlow-condensed-latin-600-normal.woff2" as="font" type="font/woff2" crossorigin>
-{'<link rel="preload" as="image" href="img/schiene-l.webp" imagesrcset="img/schiene-m.webp 800w, img/schiene-l.webp 1600w" imagesizes="100vw">' if f == 'index.html' else ''}
+<link rel="preload" href="fonts/figtree-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+{'<link rel="preload" as="image" href="img/dach-vorher-l.webp" imagesrcset="img/dach-vorher-m.webp 900w, img/dach-vorher-l.webp 1920w" imagesizes="100vw">' if f == 'index.html' else ''}
 <link rel="stylesheet" href="styles.css?v={VER}">
 <script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
 </head>
 <body class="{p.get('body', '')}">
 <a class="skip" href="#main">Zum Inhalt springen</a>
-<div class="curtain intro" aria-hidden="true"><div class="intro-mark">{MARK}<span>Solar Technik BwM</span></div></div>
+<div class="curtain intro" aria-hidden="true"><div class="intro-mark"><span class="sun"></span><span class="iw">Solar Technik BwM</span></div></div>
 <div class="curtain leave" aria-hidden="true"></div>
 <div class="progress" id="progress" aria-hidden="true"></div>
 <header class="head" id="head">
@@ -145,7 +146,7 @@ def head(p):
       <li><a href="ratgeber.html"{cur('ratgeber.html')}>Ratgeber</a></li>
       <li><a href="kontakt.html"{cur('kontakt.html')}>Kontakt</a></li>
     </ul></nav>
-    <div class="right"><a class="tel" href="tel:{CO['telh']}" aria-label="Anrufen: {CO['tel']}">{TEL}<span>{CO['tel']}</span></a><a class="btn cu mag" href="kontakt.html">Anlage anfragen</a>
+    <div class="right"><a class="tel" href="tel:{CO['telh']}" aria-label="Anrufen: {CO['tel']}">{TEL}<span>{CO['tel']}</span></a><a class="btn sun mag" href="kontakt.html">Anlage anfragen</a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu"><span class="lbl">Menü</span><span class="lines"><span></span><span></span></span></button></div>
   </div>
 </header>
@@ -161,7 +162,7 @@ def head(p):
 
 def foot(p):
     return f'''</main>
-<div class="sticky-cta"><a class="btn cu" href="kontakt.html">Anlage anfragen {ARROW}</a><a class="btn line" href="tel:{CO['telh']}" aria-label="Anrufen">{TEL}</a></div>
+<div class="sticky-cta"><a class="btn sun" href="kontakt.html">Anlage anfragen {ARROW}</a><a class="btn line" href="tel:{CO['telh']}" aria-label="Anrufen">{TEL}</a></div>
 <footer class="footer">
   <div class="wrap">
     <div class="top">
@@ -183,22 +184,18 @@ def foot(p):
 '''
 
 
-def ph(title, lead, dim, photo, alt, crumbs=None):
-    """Bemaßungs-Kopf: Maßlinie mit dem Schlüsselmaß der Seite über dem Titel, rechts ein Foto im Umriss des Schienenprofils."""
+def ph(title, lead, label, photo, alt, crumbs=None):
+    """Sonnen-Kopf: Titel links auf Sandgrund, rechts ein rundes Foto, hinter dem eine gelbe Sonne aufgeht."""
     cr = f'<p class="crumb"><a href="index.html">Start</a> / {crumbs}</p>' if crumbs else ''
-    ph_ = f'''<figure class="bh-photo" aria-hidden="true"><svg class="bh-clip" viewBox="0 0 100 100" preserveAspectRatio="none" width="0" height="0"><defs><clipPath id="prof" clipPathUnits="objectBoundingBox"><path d="{PROFILE}" transform="scale(.01)"/></clipPath></defs></svg><div class="bh-img">{pic(photo, alt, '(max-width: 900px) 70vw, 34vw', lazy=False)}</div><svg class="bh-line" viewBox="-2 -2 104 104" preserveAspectRatio="none"><path d="{PROFILE}" vector-effect="non-scaling-stroke"/></svg><span class="bh-dim-v"><i></i><b>40 mm</b></span></figure>''' if photo else ''
-    return f'''<section class="bh{'' if photo else ' no-photo'}"><div class="wrap bh-grid">
-  <div class="bh-text">{cr}
-    <div class="dimline" aria-hidden="true"><i class="dl-a"></i><span>{dim}</span><i class="dl-b"></i></div>
-    <h1 class="split">{title}</h1>
-    <p class="lead reveal">{lead}</p>
-  </div>
-  {ph_}
+    fig = f'<figure class="sh-photo" aria-hidden="true"><span class="sh-sun"></span><div class="sh-img">{pic(photo, alt, "(max-width: 900px) 70vw, 36vw", lazy=False)}</div></figure>' if photo else '<span class="sh-sun solo" aria-hidden="true"></span>'
+    return f'''<section class="sh{'' if photo else ' no-photo'}"><div class="wrap sh-grid">
+  <div class="sh-text">{cr}<p class="kicker">{label}</p><h1 class="split">{title}</h1><p class="lead reveal">{lead}</p></div>
+  {fig}
 </div></section>'''
 
 
 def cta(h, t, btn='Anlage anfragen', href='kontakt.html'):
-    return f'''<section class="sec tight"><div class="wrap"><div class="cta-band reveal"><div><h2>{h}</h2><p>{t}</p></div><div class="cta-act"><a class="btn cu big mag" href="{href}">{btn} {ARROW}</a><a class="cta-tel" href="tel:{CO['telh']}">{TEL}{CO['tel']}</a></div></div></div></section>'''
+    return f'''<section class="sec tight"><div class="wrap"><div class="cta-band reveal"><div><h2>{h}</h2><p>{t}</p></div><div class="cta-act"><a class="btn sun big mag" href="{href}">{btn} {ARROW}</a><a class="cta-tel" href="tel:{CO['telh']}">{TEL}{CO['tel']}</a></div></div></div></section>'''
 
 
 def more(file, group, title):
@@ -258,7 +255,7 @@ def form(idp='f', dark=False):
     <label class="fld wide"><span>Nachricht *</span><textarea name="nachricht" rows="4" required placeholder="Was haben Sie vor? Gern auch Dachgröße, Ausrichtung oder Wünsche zum Speicher."></textarea></label>
     <label class="chk wide"><input type="checkbox" name="datenschutz" required><span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung der Anfrage gespeichert werden. Mehr in der <a href="datenschutz.html">Datenschutzerklärung</a>. *</span></label>
   </div>
-  <div class="f-act"><button class="btn cu big mag" type="submit">Anfrage senden {ARROW}</button><p class="f-err" role="alert" aria-live="assertive"></p></div>
+  <div class="f-act"><button class="btn sun big mag" type="submit">Anfrage senden {ARROW}</button><p class="f-err" role="alert" aria-live="assertive"></p></div>
 </form>'''
 
 
@@ -272,175 +269,103 @@ PAGES = []
 
 
 # =====================================================================
-# STARTSEITE
+# STARTSEITE (2. Fassung: hell, sonnig, sechs Abschnitte)
 # =====================================================================
-SCENE = [  # Foto, Alt, Maß-Zeile, Titel, Text
-    ('schiene', 'Querschnitt einer Montageschiene aus Aluminium mit T-Nut', 'Montageschiene · Aluminium · 40 × 40 × 6000 mm', 'Photovoltaik, die hält.', 'Planung und Installation von Photovoltaikanlagen im Dreiländereck. Solar Technik BwM aus Lontzen, für Kunden rund um Aachen.'),
-    ('blechdach', 'Solarmodule auf einem Trapezblechdach, im Hintergrund Wiesen', 'Blechdach · Trapezblechschuh aus Edelstahl', 'Blechdach: der Trapezblechschuh.', 'Verstellbar, mit eingeklebtem EPDM-Gummi, passend für die meisten Trapezbleche.'),
-    ('flachdach-stadt', 'Aufgeständerte Modulreihen auf einem Flachdach zwischen Stadthäusern', 'Flachdach · aufgeständert', 'Flachdach: in Reihen aufgeständert.', 'Die Gestelle stehen auf dem Dach und sind mit Betonsteinen beschwert, wie hier auf einem Dach in der Stadt.'),
-    ('ziegeldach', 'Solarmodule auf einem dunklen Ziegeldach neben einem Dachfenster', 'Satteldach · Dachhaken aus Edelstahl', 'Ziegeldach: der Dachhaken.', 'Grundplatte 140 × 56 mm, dreifach verstellbar, für Standardpfannen. Auf den Haken läuft die Schiene.'),
-    ('bruchsteinhaus', 'Bruchsteinhaus mit Photovoltaikanlage auf dem Satteldach', 'Jede Dachform', 'Planen, montieren, anschließen, warten.', 'Alles rund um Photovoltaik aus einer Hand, mit Produkten namhafter Hersteller. Auf Flachdach, Satteldach, Pultdach oder Freifläche.'),
+SCENE = [  # Foto, Alt, Etikett, Link, Titel, Text
+    ('dach-vorher', 'Weißes Haus mit rotem Ziegeldach unter blauem Himmel', 'Solar Technik BwM · Lontzen', None, 'Ihr Dach kann mehr.', 'Wir planen, montieren und schließen Photovoltaikanlagen an – für Häuser im Raum Aachen, in Ostbelgien und Südlimburg.'),
+    ('daecher-region', 'Blick über Ziegeldächer, auf einem liegen Solarmodule', 'Planung & Beratung', 'planung-beratung.html', 'Erst planen wir.', 'Wir sehen uns Dach, Verbrauch und Wünsche an und legen die Anlage passend aus – auf Flachdach, Satteldach, Pultdach oder Wiese.'),
+    ('montage-haende', 'Hände in Arbeitshandschuhen montieren eine Schiene auf Dachziegeln', 'Montage', 'montage.html', 'Dann montieren wir.', 'Dachhaken aus Edelstahl, Schienen aus Aluminium und Module namhafter Hersteller.'),
+    ('sicherungskasten', 'Geöffneter Sicherungskasten mit Leitungsschutzschaltern', 'Anschließen', 'anschliessen.html', 'Und schließen alles an.', 'Wechselrichter, Speicher und Energiezähler – bis Ihr Haus den eigenen Strom nutzt.'),
+    ('haus-fertig', 'Reihenhäuser aus Backstein mit Solarmodulen auf dem Dach in der Sonne', 'Fertig', None, 'Ihr eigener Sonnenstrom.', 'Planung, Montage, Anschluss und Wartung aus einer Hand, im ganzen Dreiländereck.'),
 ]
-
-
-def proj(lat, lon):
-    return round((lon - 5.6) * 1000, 1), round((50.95 - lat) * 1580, 1)
-
-
-def poly(pts):
-    return 'M' + ' L'.join(f'{proj(a, b)[0]} {proj(a, b)[1]}' for a, b in pts)
-
-
-BORDER_DE_BE = [(50.7543, 6.0207), (50.735, 6.040), (50.718, 6.052), (50.700, 6.085), (50.680, 6.110), (50.662, 6.140), (50.640, 6.170), (50.615, 6.190), (50.585, 6.220), (50.555, 6.260)]
-BORDER_DE_NL = [(50.7543, 6.0207), (50.772, 6.030), (50.795, 6.018), (50.820, 6.030), (50.845, 6.055), (50.862, 6.075), (50.880, 6.088), (50.905, 6.070), (50.930, 6.040), (50.950, 6.010)]
-BORDER_BE_NL = [(50.7543, 6.0207), (50.757, 5.975), (50.762, 5.910), (50.754, 5.845), (50.758, 5.780), (50.752, 5.720), (50.770, 5.695), (50.800, 5.690), (50.830, 5.650), (50.860, 5.640), (50.900, 5.660), (50.950, 5.640)]
-PLACES = [('Lontzen', 50.69998, 5.98361, 'home'), ('Aachen', 50.776, 6.084, 'big'), ('Eupen', 50.630, 6.035, ''), ('Maastricht', 50.851, 5.691, 'big'), ('Heerlen', 50.888, 5.980, ''), ('Verviers', 50.589, 5.862, ''), ('Stolberg', 50.770, 6.228, '')]
-
-
-RING = '<circle class="ring" r="18"/>'
-
-
-def map_svg():
-    pl = ''
-    for n, la, lo, k in PLACES:
-        x, y = proj(la, lo)
-        dx, dy, anchor = {'Lontzen': (-18, 6, 'end'), 'Verviers': (-14, 5, 'end'), 'Stolberg': (0, 28, 'middle')}.get(n, (14, 5, 'start'))
-        pl += f'<g transform="translate({x} {y})"><g class="pl {k}"><circle r="{9 if k == "home" else 5}"/>{RING if k == "home" else ""}<text x="{dx}" y="{dy}" text-anchor="{anchor}">{n}{" (Sitz)" if k == "home" else ""}</text></g></g>'
-    ct = ''.join(f'<text class="ctry" x="{x}" y="{y}">{t}</text>' for t, x, y in [('DEUTSCHLAND', 480, 196), ('BELGIEN', 90, 470), ('NEDERLAND', 90, 90)])
-    tp = proj(50.7543, 6.0207)
-    return f'''<svg class="map" viewBox="0 0 700 632" role="img" aria-label="Schematische Karte des Dreiländerecks: Lontzen in Belgien, Aachen in Deutschland, Maastricht und Heerlen in den Niederlanden">
-  {ct}
-  <path class="border" pathLength="1" d="{poly(BORDER_DE_BE)}"/><path class="border" pathLength="1" d="{poly(BORDER_DE_NL)}"/><path class="border" pathLength="1" d="{poly(BORDER_BE_NL)}"/>
-  <circle class="tri" cx="{tp[0]}" cy="{tp[1]}" r="6"/><text class="tri-l" x="{tp[0] + 12}" y="{tp[1] - 10}">Dreiländerpunkt</text>
-  {pl}
-</svg>'''
-
-
-LAYERS = [  # Schicht, Titel, Angabe, Link, Versatz beim Auseinanderfahren
-    ('klemme', 'End- und Mittelklemme', 'Aluminium schwarz eloxiert, Klemmlänge 70 mm, Modulabstand 2 cm', 'befestigung.html#klemmen', -250),
-    ('modul', 'Solarmodul', 'JA Solar JAM72S10, 405 W, 2015 × 996 × 40 mm, 22,7 kg', 'module.html', -175),
-    ('schiene', 'Montageschiene', 'Aluminium, 40 × 40 × 6000 mm, Befestigung M8 oder M10', 'befestigung.html#schiene', -105),
-    ('haken', 'Dachhaken', 'Edelstahl 1.4016, Grundplatte 140 × 56 mm, dreifach verstellbar', 'befestigung.html#dachhaken', -45),
-    ('dach', 'Ihr Dach', 'Pfanne, Blech, Bitumen oder Wiese: die Befestigung richtet sich danach', 'montage.html#werkzeug', 0),
+STORY = [  # Leistung, Foto, Alt, Text
+    (SERVICES[0], 'daecher-region', 'Ziegeldächer mit Solarmodulen', 'Wir schauen uns Ihr Dach, Ihren Stromverbrauch, Heizung und Warmwasser an. Daraus entsteht eine Anlage, die zu Ihnen passt, mit Speicher oder ohne.'),
+    (SERVICES[1], 'montage-haende', 'Montage auf einem Ziegeldach', 'Ob Ziegel, Blech, Bitumen oder Wiese: Wir wählen das Gestell passend zum Dach und montieren sauber und dicht.'),
+    (SERVICES[2], 'sicherungskasten', 'Sicherungskasten', 'Wechselrichter, Speicher und Energiezähler verbinden wir mit Ihrem Hausnetz und nehmen die Anlage in Betrieb.'),
+    (SERVICES[3], 'wartung-module', 'Techniker prüft Solarmodule', 'Damit die Anlage viele Jahre liefert, prüfen wir Befestigung, Module, Kabel, Wechselrichter und Ertrag.'),
 ]
-
-
-def layers_svg():
-    tiles = ''.join(f'<path d="M{x} 392q30-24 60 0"/>' for x in range(40, 860, 60))
-    hatch = ''.join(f'<path d="M{x} 420l22-28"/>' for x in range(46, 860, 26))
-    def hook(x):
-        return f'<path class="hk" d="M{x - 34} 392H{x + 8}V372q0-10 10-10H{x + 26}V344"/>'
-    cells = ''.join(f'<path d="M{x} 298v12"/>' for x in list(range(96, 444, 26)) + list(range(482, 830, 26)))
-    def endclamp(x, d):
-        return f'<path d="M{x} 290h{16 * d}v6h{-10 * d}v16h{-6 * d}z"/><path class="bolt" d="M{x + 6 * d} 296v24"/>'
-    return f'''<svg class="layers-svg" viewBox="0 150 900 290" role="img" aria-label="Schnittzeichnung einer Photovoltaik-Montage: Dach, Dachhaken, Schiene, Modul und Klemmen fahren auseinander">
-  <g class="ly" data-l="dach" data-dy="0"><rect class="rafter" x="40" y="392" width="820" height="28"/><g class="hatch">{hatch}</g><g class="tiles">{tiles}</g></g>
-  <g class="ly" data-l="haken" data-dy="-45">{hook(210)}{hook(670)}</g>
-  <g class="ly" data-l="schiene" data-dy="-105"><rect class="rail" x="60" y="312" width="780" height="32" rx="2"/><path class="rail-l" d="M60 320H840M60 336H840"/></g>
-  <g class="ly" data-l="modul" data-dy="-175"><rect class="mod" x="70" y="296" width="374" height="16"/><rect class="mod" x="456" y="296" width="374" height="16"/><g class="cells">{cells}</g></g>
-  <g class="ly" data-l="klemme" data-dy="-250"><g class="clamp">{endclamp(58, 1)}{endclamp(842, -1)}<path d="M432 290h36v6h-14v16h-8v-16h-14z"/><path class="bolt" d="M450 296v24"/></g></g>
-  <g class="dims"><path d="M70 100H444M456 100H830M70 92v16M444 92v16M456 92v16M830 92v16"/><text x="257" y="84">996 mm</text><text x="643" y="84">996 mm</text><text class="gap" x="450" y="84">2 cm</text></g>
-</svg>'''
+ROOF_PHOTOS = {'flachdach': ('flachdach-reihen', 'Aufgeständerte Modulreihen auf einem Flachdach, Anlage von BwM'), 'satteldach': ('steinhaus-pv', 'Steinhaus mit Solarmodulen auf dem Satteldach'),
+               'pultdach': ('blechdach-weit', 'Blechdach mit Solarmodulen, Anlage von BwM'), 'freiflaeche': ('freiflaeche', 'Solarmodule auf einem Gestell auf der Wiese')}
+ROOF_TEXT = {'flachdach': 'Die Module stehen geneigt in Reihen auf Gestellen, beschwert mit Betonsteinen. Den Reihenabstand planen wir so, dass sich die Reihen nicht verschatten.',
+             'satteldach': 'Dachhaken aus Edelstahl laufen unter der Pfanne hindurch, darauf liegen die Schienen und darauf die Module – parallel zur Dachfläche.',
+             'pultdach': 'Eine Dachfläche, eine Richtung. Je nach Eindeckung setzen wir Dachhaken oder Trapezblechschuhe mit Dichtung.',
+             'freiflaeche': 'Auf der Wiese steht das Gestell auf dem Boden. Neigung und Ausrichtung bestimmen wir frei, weil kein Dach sie vorgibt.'}
+FAN = [('flachdach-stadt', 'Flachdach'), ('bruchsteinhaus', 'Bruchsteinhaus'), ('blechdach', 'Blechdach'), ('backsteinhaus', 'Backsteinhaus'), ('flachdach-reihen', 'Flachdach')]
 
 
 def home():
-    frames = ''
-    for i, (ph_, alt, spec_, t, d) in enumerate(SCENE):
+    frames, caps = '', ''
+    for i, (ph_, alt, lab, link, t, d) in enumerate(SCENE):
         img = pic(ph_, alt, '100vw', lazy=False) if i == 0 else pic(ph_, alt, '100vw', late=True)
         tag = 'h1' if i == 0 else 'h2'
-        act = f'<div class="cap-act"><a class="btn cu big mag" href="kontakt.html">Anlage anfragen {ARROW}</a><a class="btn ghost" href="montage.html">So befestigen wir</a></div>' if i == 4 else ''
-        frames += f'<div class="frame f{i}"><div class="fimg">{img}</div><div class="shade"></div></div>'
-        frames += f'<div class="cap c{i}"><div class="wrap"><p class="spec-l">{spec_}</p><{tag}>{t}</{tag}><p>{d}</p>{act}</div></div>'
-    static = ''.join(f'<figure>{pic(ph_, alt, "(max-width: 700px) 100vw, 50vw")}<figcaption><b>{t}</b> {d}</figcaption></figure>' for ph_, alt, s, t, d in SCENE)
+        more_ = f'<a class="link" href="{link}">Mehr zu {lab} {ARROW}</a>' if link else ''
+        act = f'<div class="cap-act"><a class="btn sun big mag" href="kontakt.html">Anlage anfragen {ARROW}</a><a class="btn line" href="leistungen.html">Leistungen</a></div>' if i == 4 else ''
+        frames += f'<div class="frame f{i}"><div class="fimg">{img}</div></div>'
+        caps += f'<div class="cap c{i}"><p class="kicker">{lab}</p><{tag}>{t}</{tag}><p class="cap-t">{d}</p>{more_}{act}</div>'
+    dots = ''.join('<i></i>' for _ in SCENE)
+    static = ''.join(f'<figure>{pic(ph_, alt, "(max-width: 700px) 100vw, 50vw")}<figcaption><b>{t}</b> {d}</figcaption></figure>' for ph_, alt, lab, link, t, d in SCENE)
     static = static.replace(' src="img/', ' data-st-src="img/').replace(' srcset="', ' data-st-srcset="')
-    clamps = ''.join(f'<i style="left:{k * 25}%"></i>' for k in range(5))
-    rail_items = ''.join(f'''<li class="ri" style="--k:{k}"><a href="{s[0]}"><svg class="ri-clamp" viewBox="0 0 60 40" aria-hidden="true"><path d="M4 4h52v8H36v24h-12V12H4z"/></svg><span class="ri-t">{s[1]}</span><span class="ri-d">{s[2]}</span><span class="ri-go">Mehr {ARROW}</span></a></li>''' for k, s in enumerate(SERVICES))
-    ltab = ''.join(f'<li data-l="{l}"><a href="{u}"><b>{t}</b><span>{d}</span>{ARROW}</a></li>' for l, t, d, u, dy in LAYERS)
+    def chip(n, alt):
+        return f'<span class="ichip" aria-hidden="true">{pic(n, alt, "160px", late=True)}</span>'
+    story_imgs = ''.join(f'<figure class="st-img{" on" if i == 0 else ""}" data-i="{i}">{pic(ph_, alt, "(max-width: 900px) 100vw, 45vw", late=True)}</figure>' for i, (sv, ph_, alt, d) in enumerate(STORY))
+    story_ch = ''
+    for i, (sv, ph_, alt, d) in enumerate(STORY):
+        tool = next(x for x in TOOLS if x[0] == sv[0])
+        story_ch += f'''<article class="ch" data-i="{i}"><figure class="ch-img">{pic(ph_, alt, "(max-width: 700px) 300px, 90vw", late=True)}</figure><h3>{sv[1]}</h3><p>{d}</p>
+  <p class="ch-tool">{tool_icon(tool[3])}<a href="{sv[0]}#werkzeug">{tool[1]}</a></p><a class="btn line" href="{sv[0]}">{sv[1]} {ARROW}</a></article>'''
     roof_tabs = ''.join(f'<button type="button" role="tab" id="rt-{k}" aria-controls="rp" aria-selected="{"true" if i == 0 else "false"}" tabindex="{0 if i == 0 else -1}" data-roof="{k}">{t}</button>' for i, (k, t) in enumerate(ROOFS))
-    shots = [('flachdach-stadt', 'Flachdach in der Stadt', 'Aufgeständerte Reihen, Dezember 2022'), ('flachdach-ballast', 'Flachdach, Detail', 'Gestell mit Betonsteinen als Ballast'),
-             ('blechdach-weit', 'Blechdach auf dem Land', 'Trapezblech, August 2022'), ('backsteinhaus', 'Backsteinhaus', 'Satteldach, Dezember 2022'),
-             ('ziegeldach', 'Ziegeldach', 'Module neben dem Dachfenster, Dezember 2022'), ('flachdach-hof', 'Flachdach mit Ausblick', 'Zwei Reihen, Dezember 2022')]
-    thumbs = ''.join(f'<li><button type="button" data-i="{i}" aria-pressed="{"true" if i == 0 else "false"}" aria-label="Foto zeigen: {t}">{pic(n, "", "120px")}</button></li>' for i, (n, t, d) in enumerate(shots))
-    big = ''.join(f'<figure class="bs-f{" on" if i == 0 else ""}" data-i="{i}">{pic(n, t + ": " + d, "(max-width: 900px) 100vw, 60vw")}<figcaption><b>{t}</b><span>{d}</span></figcaption></figure>' for i, (n, t, d) in enumerate(shots))
+    roof_imgs = ''.join(f'<figure class="rf{" on" if i == 0 else ""}" data-roof="{k}">{pic(ROOF_PHOTOS[k][0], ROOF_PHOTOS[k][1], "(max-width: 900px) 100vw, 60vw", late=True)}</figure>' for i, (k, t) in enumerate(ROOFS))
+    roof_txt = ''.join(f'<div class="rt{" on" if i == 0 else ""}" data-roof="{k}"><h3>{t}</h3><p>{ROOF_TEXT[k]}</p></div>' for i, (k, t) in enumerate(ROOFS))
+    fan = ''.join(f'<li class="print" style="--k:{i}">{pic(n, t + ", Anlage von Solar Technik BwM", "(max-width: 700px) 50vw, 250px", late=True)}<span>{t}</span></li>' for i, (n, t) in enumerate(FAN))
     tools = ''.join(f'<li class="tl"><a href="{a}#werkzeug">{tool_icon(ic)}<span class="tl-q">{q}</span><span class="tl-t">{t}</span>{ARROW}</a></li>' for a, q, t, ic in TOOLS)
     body = f'''
-<section class="scene" aria-label="Was eine Anlage trägt">
+<section class="scene" aria-label="Von Ihrem Dach zum eigenen Sonnenstrom">
   <div class="scene-pin">
     {frames}
-    <div class="srail" aria-hidden="true"><span class="sr-bar"><b></b></span>{clamps}</div>
+    <div class="scard"><div class="caps">{caps}</div><div class="sdots" aria-hidden="true">{dots}</div></div>
   </div>
   <div class="scene-static wrap">{static}</div>
 </section>
 
-<section class="sec region" id="region"><div class="wrap region-grid">
-  <div class="region-text">
-    <p class="kicker">Raum Aachen · Ostbelgien · Südlimburg</p>
-    <h2 class="split">Ein Betrieb, drei Länder.</h2>
-    <p class="lead reveal">Wir haben uns auf die Planung und Installation hochwertiger Photovoltaikanlagen im Raum Aachen spezialisiert. Unser Kundenkreis liegt im Dreiländereck Deutschland, Belgien und Niederlande.</p>
-    <p class="reveal">Um Ihnen ein hohes Maß an Investitionssicherheit für viele Jahre zu bieten, arbeiten wir ausschließlich mit namhaften Herstellern und deren Qualitätsprodukten.</p>
-    <a class="link reveal" href="ueber-uns.html">Über Solar Technik BwM {ARROW}</a>
-  </div>
-  <div class="region-map">{map_svg()}<p class="map-note">Schematische Darstellung</p></div>
+<section class="sec intro"><div class="wrap">
+  <p class="kicker">Solar Technik BwM</p>
+  <p class="big-line">Wir planen und installieren Photovoltaik {chip('ziegel-pv', 'Solarmodule auf einem Ziegeldach')} im Raum Aachen – für Kunden in Deutschland, Belgien {chip('steinhaus-pv', 'Steinhaus mit Solarmodulen')} und den Niederlanden. Mit Produkten namhafter Hersteller {chip('module-nah', 'Solarmodule aus der Nähe')} und alles aus einer Hand.</p>
+  <a class="link reveal" href="ueber-uns.html">Über uns {ARROW}</a>
 </div></section>
 
-<section class="layers" id="aufbau" aria-labelledby="ly-h">
-  <div class="layers-pin"><div class="wrap layers-grid">
-    <div class="layers-head"><p class="kicker">Der Aufbau</p><h2 id="ly-h">Was eine Anlage trägt.</h2><p>Von der Pfanne bis zur Klemme: fünf Schichten, und jede muss sitzen. Die Maße stammen aus unserem Material.</p></div>
-    <div class="layers-draw">{layers_svg()}<p class="nts">Nicht maßstäblich</p></div>
-    <ol class="layers-list">{ltab}</ol>
-  </div></div>
-</section>
-
-<section class="sec rail-sec" id="leistungen"><div class="wrap">
+<section class="sec story" id="leistungen"><div class="wrap">
   <div class="sec-head"><p class="kicker">Leistungen</p><h2 class="split">Wir machen alles rund um Photovoltaik.</h2></div>
-  <div class="rail-wrap"><div class="rail-bar" aria-hidden="true"><i></i></div><ul class="rail-items">{rail_items}</ul></div>
+  <div class="story-grid"><div class="st-stick">{story_imgs}</div><div class="st-list">{story_ch}</div></div>
 </div></section>
 
-<section class="sec roofs dark" id="dachformen"><div class="wrap">
-  <div class="sec-head"><p class="kicker">Dachformen</p><h2 class="split">Flachdach, Satteldach, Pultdach oder Wiese.</h2><p class="lead reveal">Jegliche Wünsche der Anbringung sind möglich. Was sich ändert, ist das, was die Module hält.</p></div>
+<section class="sec roofs sand" id="dachformen"><div class="wrap">
+  <div class="sec-head row"><div><p class="kicker">Dachformen</p><h2 class="split">Jedes Dach kann Sonne.</h2></div><p class="lead reveal">Flachdach, Satteldach, Pultdach oder Freifläche: Jegliche Wünsche der Anbringung sind möglich.</p></div>
   <div class="roof-ui">
     <div class="roof-tabs" role="tablist" aria-label="Dachform wählen">{roof_tabs}</div>
     <div class="roof-panel" id="rp" role="tabpanel" aria-labelledby="rt-flachdach">
-      <div class="roof-draw">
-        <svg viewBox="0 0 400 210" aria-hidden="true"><path class="ground" d="M10 190H390"/><polygon class="house" points="60,190 60,95 200,95 200,95 340,95 340,190"/>
-          <g class="rm rm-flachdach"><path d="M92 95l26-18v18M150 95l26-18v18M208 95l26-18v18M266 95l26-18v18"/><path class="rm-p" d="M92 95l26-18M150 95l26-18M208 95l26-18M266 95l26-18"/></g>
-          <g class="rm rm-satteldach"><path class="rm-p" d="M92 94l100-48M214 50l96 47"/></g>
-          <g class="rm rm-pultdach"><path class="rm-p" d="M84 64l232 34"/></g>
-          <g class="rm rm-freiflaeche"><path d="M70 190v-34M150 190v-34M230 190v-34M310 190v-34"/><path class="rm-p" d="M50 168l60-40M130 168l60-40M210 168l60-40M290 168l60-40"/></g>
-        </svg>
-      </div>
-      <div class="roof-info">
-        <div class="roof-photo">{pic('flachdach-reihen', 'Aufgeständerte Modulreihen auf einem Flachdach', '(max-width: 900px) 100vw, 40vw', cls='rp-img')}</div>
-        <h3 class="roof-t">Flachdach</h3>
-        <p class="roof-d">Die Module stehen in Reihen auf Gestellen, beschwert mit Betonsteinen. Neigung und Reihenabstand planen wir so, dass sich die Reihen nicht verschatten.</p>
-        <a class="link" href="montage.html#werkzeug">Befestigung für Ihr Dach finden {ARROW}</a>
-      </div>
+      <div class="roof-photo">{roof_imgs}</div>
+      <div class="roof-info">{roof_txt}<a class="link" href="montage.html#werkzeug">Befestigung für Ihr Dach finden {ARROW}</a></div>
     </div>
   </div>
 </div></section>
 
-<section class="sec shots" id="baustellen"><div class="wrap">
-  <div class="sec-head row"><div><p class="kicker">Referenzen</p><h2 class="split">Von unseren Dächern.</h2></div><a class="link reveal" href="referenzen.html">Alle Referenzen {ARROW}</a></div>
-  <div class="bs">
-    <div class="bs-stage"><span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span><span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>
-      <div class="bs-dim h" aria-hidden="true"><i></i></div><div class="bs-dim v" aria-hidden="true"><i></i></div>
-      <div class="bs-frame">{big}</div>
-    </div>
-    <ul class="bs-thumbs" aria-label="Fotos wählen">{thumbs}</ul>
-  </div>
+<section class="sec fan-sec" id="referenzen"><div class="wrap">
+  <div class="sec-head center"><p class="kicker">Referenzen</p><h2 class="split">Echte Dächer, echte Anlagen.</h2><p class="lead reveal">Fotos von unseren eigenen Baustellen im Dreiländereck.</p></div>
+  <ul class="fan">{fan}</ul>
+  <p class="center reveal"><a class="btn line" href="referenzen.html">Alle Referenzen {ARROW}</a></p>
 </div></section>
 
-<section class="sec tools-sec" id="ausprobieren"><div class="wrap tools-grid">
-  <div class="sec-head sticky-h"><p class="kicker">Selbst ausprobieren</p><h2 class="split">Acht Fragen, acht kleine Werkzeuge.</h2><p class="reveal">Jede Frage führt direkt zum passenden Rechner oder Wegweiser auf der Unterseite. Die Ergebnisse sind Richtwerte, keine Planung.</p></div>
-  <div class="tools-list"><span class="tape" aria-hidden="true"><i></i></span><ul>{tools}</ul></div>
+<section class="sec tools-sec sand" id="ausprobieren"><div class="wrap">
+  <div class="sec-head row"><div><p class="kicker">Selbst ausprobieren</p><h2 class="split">Acht Fragen, acht kleine Rechner.</h2></div><p class="reveal">Jede Frage führt direkt zum passenden Werkzeug. Die Ergebnisse sind Richtwerte, keine Planung.</p></div>
+  <ul class="tools-list">{tools}</ul>
 </div></section>
 
-<section class="sec ask dark" id="anfrage"><div class="wrap ask-grid">
+<section class="sec ask" id="anfrage"><span class="ask-sun" aria-hidden="true"></span><div class="wrap ask-grid">
   <div class="ask-text"><p class="kicker">Anfrage</p><h2 class="split">Erzählen Sie uns von Ihrem Dach.</h2>
     <p class="reveal">Mit Stromverbrauch, Heizung und Warmwasser können wir die Anlage schon grob auslegen, bevor wir vorbeikommen.</p>
     <ul class="ask-contact reveal"><li>{TEL}<a href="tel:{CO['telh']}">{CO['tel']}</a></li><li>{MAIL}<a href="mailto:{CO['mail']}">{CO['mail']}</a></li><li>{PIN}<span>{CO['person']}, {CO['street']}, B-{CO['zip']} {CO['city']}</span></li></ul>
   </div>
-  <div class="ask-sheet"><span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span><span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>{form('h', True)}</div>
+  <div class="ask-sheet">{form('h')}</div>
 </div></section>
 '''
     p = dict(file='index.html', title='Photovoltaik im Dreiländereck | Solar Technik BwM', body='home',
@@ -465,7 +390,7 @@ def leistungen():
         tool = next(x for x in TOOLS if x[0] == a)
         rows += f'''<article class="lrow reveal{' flip' if i % 2 else ''}"><a class="lrow-img" href="{a}" tabindex="-1" aria-hidden="true">{pic(ph_, '', '(max-width: 900px) 100vw, 45vw')}</a>
   <div class="lrow-t"><h2><a href="{a}">{t}</a></h2><p>{d}</p><p class="lrow-tool">{tool_icon(tool[3])}<a href="{a}#werkzeug">{tool[2]}: {tool[1]}</a></p><a class="btn line" href="{a}">{t} ansehen {ARROW}</a></div></article>'''
-    body = ph('Leistungen', 'Wir machen alles rund um Photovoltaik: von der ersten Beratung über die Montage und den Anschluss bis zur Wartung. Alles aus einer Hand, im ganzen Dreiländereck.', 'Planen · Montieren · Anschließen · Warten', 'flachdach-stadt', 'Aufgeständerte Modulreihen auf einem Flachdach in der Stadt', 'Leistungen') + \
+    body = ph('Leistungen', 'Wir machen alles rund um Photovoltaik: von der ersten Beratung über die Montage und den Anschluss bis zur Wartung. Alles aus einer Hand, im ganzen Dreiländereck.', 'Alles aus einer Hand', 'ziegel-pv', 'Solarmodule auf einem Ziegeldach in der Sonne', 'Leistungen') + \
         f'<section class="sec"><div class="wrap lrows">{rows}</div></section>' + cta('Welche Leistung brauchen Sie?', 'Eine neue Anlage, ein Speicher zum Nachrüsten oder eine Wartung: Schreiben Sie uns kurz, worum es geht.')
     p = dict(file='leistungen.html', title='Leistungen: Planung, Montage, Anschluss, Wartung | Solar BwM',
              desc='Planung und Beratung, Montage, Anschließen und Wartung von Photovoltaikanlagen im Raum Aachen und in Ostbelgien: alles aus einer Hand.',
@@ -492,10 +417,10 @@ def planung():
     <div class="tq"><p class="tl-l">Warmwasser</p>{chips('ww', [(x, x) for x in ['über die Heizung', 'elektrisch', 'Wärmepumpe', 'weiß ich nicht']], 0, 'Warmwasser')}</div>
     <div class="tq"><p class="tl-l">E-Auto</p>{chips('auto', [(x, x) for x in ['vorhanden', 'geplant', 'nein']], 2, 'E-Auto')}</div>
     <div class="tq"><p class="tl-l">Speicher</p>{chips('speicher', [(x, x) for x in ['gewünscht', 'vielleicht', 'nein']], 1, 'Speicher')}</div>
-    <div class="brief-out" aria-live="polite"><p class="bo-h">Ihr Steckbrief</p><dl class="bo-dl"></dl><p class="bo-hint"></p><a class="btn cu mag" href="kontakt.html" data-brief-link>In die Anfrage übernehmen {ARROW}</a></div>
+    <div class="brief-out" aria-live="polite"><p class="bo-h">Ihr Steckbrief</p><dl class="bo-dl"></dl><p class="bo-hint"></p><a class="btn sun mag" href="kontakt.html" data-brief-link>In die Anfrage übernehmen {ARROW}</a></div>
   </div>
 </div></section>'''
-    body = ph('Planung & Beratung', 'Bevor ein Modul aufs Dach kommt, sehen wir uns Ihr Dach, Ihren Verbrauch und Ihre Pläne an. Daraus entsteht eine Anlage, die zu Ihnen passt.', 'Dach · Verbrauch · Wünsche', 'bruchsteinhaus', 'Bruchsteinhaus mit Photovoltaikanlage auf dem Satteldach', '<a href="leistungen.html">Leistungen</a> / Planung & Beratung') + f'''
+    body = ph('Planung & Beratung', 'Bevor ein Modul aufs Dach kommt, sehen wir uns Ihr Dach, Ihren Verbrauch und Ihre Pläne an. Daraus entsteht eine Anlage, die zu Ihnen passt.', 'Leistung', 'daecher-region', 'Blick über Ziegeldächer mit Solarmodulen', '<a href="leistungen.html">Leistungen</a> / Planung & Beratung') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head sticky-h"><p class="kicker">Was wir uns ansehen</p><h2 class="split">Fünf Dinge entscheiden über die Anlage.</h2></div>
   <ol class="looks">{lk}</ol>
@@ -538,7 +463,7 @@ def montage():
     <script type="application/json" class="co-data">{data}</script>
   </div>
 </div></section>'''
-    body = ph('Montage', 'Flachdach, Satteldach, Pultdach oder Freifläche: Wir montieren auf jeder Dachform. Was sich ändert, ist das Gestell darunter. Darauf kommt es an.', 'Flach · Sattel · Pult · Frei', 'flachdach-reihen', 'Aufgeständerte Modulreihen auf einem Flachdach', '<a href="leistungen.html">Leistungen</a> / Montage') + f'''
+    body = ph('Montage', 'Flachdach, Satteldach, Pultdach oder Freifläche: Wir montieren auf jeder Dachform. Was sich ändert, ist das Gestell darunter. Darauf kommt es an.', 'Leistung', 'montage-haende', 'Hände in Arbeitshandschuhen montieren eine Schiene auf einem Ziegeldach', '<a href="leistungen.html">Leistungen</a> / Montage') + f'''
 <section class="sec"><div class="wrap"><div class="sec-head"><p class="kicker">Von unten nach oben</p><h2 class="split">Wie eine Anlage aufs Dach kommt.</h2></div><ol class="seq">{sq}</ol></div></section>
 {tool}
 <section class="sec tight"><div class="wrap media-row reveal"><div class="mr-img">{pic('kran', 'Kran-LKW auf einem Hof', '(max-width: 900px) 100vw, 50vw')}</div><div class="mr-t"><h2 class="h3">Material bis aufs Dach</h2><p>Schienen sind sechs Meter lang, ein Modul wiegt 22,7 kg. Wo es eng oder hoch wird, bringen wir das Material mit dem Kran-LKW nach oben.</p><a class="link" href="befestigung.html">Unser Befestigungsmaterial {ARROW}</a></div></div></section>
@@ -570,7 +495,7 @@ def anschliessen():
     <p class="note">Schematische Sonnenkurve für einen hellen Tag. Wie viel Ihre Anlage wirklich liefert, hängt von Jahreszeit, Wetter und Ausrichtung ab.</p>
   </div>
 </div></section>'''
-    body = ph('Anschließen', 'Eine Anlage ist erst fertig, wenn sie Strom ins Haus liefert. Wir verbinden Module, Wechselrichter, Speicher und Energiezähler und nehmen alles in Betrieb.', 'Gleichstrom → Wechselstrom', 'blechdach', 'Solarmodule auf einem Blechdach in der Sonne', '<a href="leistungen.html">Leistungen</a> / Anschließen') + f'''
+    body = ph('Anschließen', 'Eine Anlage ist erst fertig, wenn sie Strom ins Haus liefert. Wir verbinden Module, Wechselrichter, Speicher und Energiezähler und nehmen alles in Betrieb.', 'Leistung', 'sicherungskasten', 'Geöffneter Sicherungskasten mit Leitungsschutzschaltern', '<a href="leistungen.html">Leistungen</a> / Anschließen') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head sticky-h"><p class="kicker">Vom Dach bis zum Zähler</p><h2 class="split">Was wir alles verbinden.</h2><p class="reveal">Die Anmeldung beim Netzbetreiber besprechen wir mit Ihnen vorab. In Deutschland, Belgien und den Niederlanden gelten dafür unterschiedliche Regeln.</p></div>
   <ol class="chain">{ch}</ol>
@@ -598,13 +523,13 @@ def wartung():
               ('Ertrag', 'Wir vergleichen den Ertrag mit den Vorjahren und zwischen den Strängen.')]
     ck = ''.join(f'<li class="reveal"><h3>{a}</h3><p>{b}</p></li>' for a, b in checks)
     opts = ''.join(f'<button type="button" class="sym{" on" if i == 0 else ""}" data-v="{k}" aria-pressed="{"true" if i == 0 else "false"}">{t}</button>' for i, (k, t, *_r) in enumerate(SYMPTOMS))
-    panels = ''.join(f'<div class="sym-p{" on" if i == 0 else ""}" data-p="{k}"><h3>{t}</h3><div class="sp-2"><div><p class="sp-k">Das können Sie selbst prüfen</p><ul>{"".join(f"<li>{x}</li>" for x in own)}</ul></div><div class="sp-call"><p class="sp-k">Dann rufen Sie uns</p><p>{call}</p><a class="btn cu" href="kontakt.html?thema=wartung">Wartung anfragen {ARROW}</a></div></div></div>' for i, (k, t, own, call) in enumerate(SYMPTOMS))
+    panels = ''.join(f'<div class="sym-p{" on" if i == 0 else ""}" data-p="{k}"><h3>{t}</h3><div class="sp-2"><div><p class="sp-k">Das können Sie selbst prüfen</p><ul>{"".join(f"<li>{x}</li>" for x in own)}</ul></div><div class="sp-call"><p class="sp-k">Dann rufen Sie uns</p><p>{call}</p><a class="btn sun" href="kontakt.html?thema=wartung">Wartung anfragen {ARROW}</a></div></div></div>' for i, (k, t, own, call) in enumerate(SYMPTOMS))
     tool = f'''<section class="sec tool-sec" id="werkzeug"><div class="wrap tool-grid">
   {tool_head('Symptom-Wegweiser', 'Was ist Ihnen aufgefallen? Sie sehen, was Sie gefahrlos selbst prüfen können und wann Sie uns rufen sollten.')}
   <div class="tool card" data-tool="sym"><div class="syms" role="group" aria-label="Was ist aufgefallen?">{opts}</div><div class="sym-ps" aria-live="polite">{panels}</div>
   <p class="note warn">Bitte nie selbst aufs Dach steigen und nichts an Steckern oder Kabeln lösen: Auf der Gleichstromseite liegen je nach Anlage mehrere hundert Volt an, auch wenn der Wechselrichter aus ist.</p></div>
 </div></section>'''
-    body = ph('Wartung', 'Eine Photovoltaikanlage soll viele Jahre laufen. Damit das so bleibt, prüfen wir Befestigung, Module, Kabel, Wechselrichter und Ertrag.', 'Jahr für Jahr', 'ziegeldach', 'Solarmodule auf einem dunklen Ziegeldach', '<a href="leistungen.html">Leistungen</a> / Wartung') + f'''
+    body = ph('Wartung', 'Eine Photovoltaikanlage soll viele Jahre laufen. Damit das so bleibt, prüfen wir Befestigung, Module, Kabel, Wechselrichter und Ertrag.', 'Leistung', 'wartung-module', 'Techniker prüft Solarmodule in der Sonne', '<a href="leistungen.html">Leistungen</a> / Wartung') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head sticky-h"><p class="kicker">Was wir prüfen</p><h2 class="split">Von der Klemme bis zum Ertrag.</h2></div>
   <ol class="looks">{ck}</ol>
@@ -631,7 +556,7 @@ def produkte():
     for i, (t, d, items, idd) in enumerate(groups):
         li = ''.join(f'<li class="reveal"><a href="{a}"><span class="pl-img">{pic(ph_, "", "(max-width: 700px) 40vw, 200px")}</span><span class="pl-t">{tt}</span><span class="pl-d">{dd}</span>{ARROW}</a></li>' for a, tt, dd, ph_ in items)
         sec += f'<section class="sec{" grey" if i == 1 else ""}" id="{idd}"><div class="wrap two"><div class="sec-head"><p class="kicker">{t}</p><h2 class="split">{t}</h2><p class="reveal">{d}</p></div><ul class="plist">{li}</ul></div></section>'
-    body = ph('Produkte', 'Wir verbauen ausschließlich Produkte von namhaften Herstellern und deren Qualitätsprodukte. Hier finden Sie, was in unseren Anlagen steckt, mit den technischen Daten.', 'Modul · Gestell · Elektronik', 'flachdach-hof', 'Zwei Modulreihen auf einem Flachdach', 'Produkte') + sec + cta('Fragen zu einem Produkt?', 'Wir erklären Ihnen gern, warum wir welches Teil verbauen und was es für Ihre Anlage bedeutet.')
+    body = ph('Produkte', 'Wir verbauen ausschließlich Produkte von namhaften Herstellern und deren Qualitätsprodukte. Hier finden Sie, was in unseren Anlagen steckt, mit den technischen Daten.', 'Was wir verbauen', 'ziegel-pv', 'Solarmodule auf einem Ziegeldach', 'Produkte') + sec + cta('Fragen zu einem Produkt?', 'Wir erklären Ihnen gern, warum wir welches Teil verbauen und was es für Ihre Anlage bedeutet.')
     p = dict(file='produkte.html', title='Produkte: Module, Befestigung, Elektronik | Solar Technik BwM',
              desc='Was in unseren Photovoltaikanlagen steckt: JA-Solar-Module, Montagesystem aus Aluminium und Edelstahl, Huawei-Wechselrichter, Speicher, Energiezähler.',
              ld=ld_crumbs([('', 'Start'), ('produkte.html', 'Produkte')]))
@@ -652,7 +577,7 @@ def module():
     <p class="note">Rechnung nach dem Temperaturkoeffizienten aus dem Datenblatt (−0,350 % pro °C über 25 °C). Richtwert für ein Modul unter voller Einstrahlung, ohne Wechselrichter- und Kabelverluste.</p>
   </div>
 </div></section>'''
-    body = ph('Module', 'Wir verbauen Solarmodule von JA Solar, Typ JAM72S10 mit 405 W. Auf Kundenwunsch liefern wir auch Module anderer Hersteller.', '2015 × 996 mm', 'flachdach-hof', 'Zwei Modulreihen auf einem Flachdach', '<a href="produkte.html">Produkte</a> / Module') + f'''
+    body = ph('Module', 'Wir verbauen Solarmodule von JA Solar, Typ JAM72S10 mit 405 W. Auf Kundenwunsch liefern wir auch Module anderer Hersteller.', 'Produkt', 'module-nah', 'Solarmodule aus der Nähe', '<a href="produkte.html">Produkte</a> / Module') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head"><p class="kicker">Technische Daten</p><h2 class="split">JA Solar JAM72S10, 405 W.</h2><p class="reveal">Angaben aus dem Datenblatt des Herstellers bei Standard-Testbedingungen (1000 W/m², 25 °C Zelltemperatur).</p>
     <a class="dsheet reveal" href="img/p-datenblatt-l.webp" target="_blank" rel="noopener">{pic('p-datenblatt', 'Datenblatt JA Solar JAM72S10, Seite 2', '220px')}<span>Datenblatt ansehen {ARROW}</span></a></div>
@@ -686,7 +611,7 @@ def befestigung():
     <p class="note">Richtwert: je Reihe zwei Schienen, 5 cm Überstand an jedem Ende, 2 cm Modulabstand, Schienenstücke zu 6 m. Die Zahl der Dachhaken legen wir nach Sparrenabstand, Schnee- und Windlast fest.</p>
   </div>
 </div></section>'''
-    body = ph('Befestigung', 'Das Gestell sieht man später kaum, aber es trägt die Anlage über viele Jahre. Wir verbauen Schienen aus Aluminium, Haken aus Edelstahl und schwarz eloxierte Klemmen.', '40 × 40 × 6000 mm', 'schiene', 'Querschnitt einer Montageschiene aus Aluminium', '<a href="produkte.html">Produkte</a> / Befestigung') + \
+    body = ph('Befestigung', 'Das Gestell sieht man später kaum, aber es trägt die Anlage über viele Jahre. Wir verbauen Schienen aus Aluminium, Haken aus Edelstahl und schwarz eloxierte Klemmen.', 'Produkt', 'dachhaken', 'Dachhaken aus Edelstahl auf Montageschienen', '<a href="produkte.html">Produkte</a> / Befestigung') + \
         f'<section class="sec"><div class="wrap parts">{sec}</div></section>' + tool + more('befestigung.html', PRODUCTS, 'Weitere Produkte') + cta('Welches Gestell braucht Ihr Dach?', 'Schicken Sie uns ein Foto der Dacheindeckung. Wir sagen Ihnen, was passt.')
     p = dict(file='befestigung.html', parent='produkte.html', title='PV-Befestigung: Schiene, Dachhaken, Klemmen | Solar BwM',
              desc='Montageschiene 40 × 40 mm, Dachhaken aus Edelstahl, Trapezblechschuh, End- und Mittelklemme. Mit Stückliste für Schienen und Klemmen.',
@@ -718,7 +643,7 @@ def wechselrichter():
     <script type="application/json" class="inv-data">{data}</script>
   </div>
 </div></section>'''
-    body = ph('Wechselrichter', 'Der Wechselrichter macht aus dem Gleichstrom der Module Wechselstrom für Ihr Haus. Wir verbauen einphasige Geräte der Serie Huawei SUN2000-L1 mit zwei MPP-Trackern.', '3 bis 4 kW', 'blechdach-weit', 'Photovoltaikanlage auf einem Blechdach', '<a href="produkte.html">Produkte</a> / Wechselrichter') + f'''
+    body = ph('Wechselrichter', 'Der Wechselrichter macht aus dem Gleichstrom der Module Wechselstrom für Ihr Haus. Wir verbauen einphasige Geräte der Serie Huawei SUN2000-L1 mit zwei MPP-Trackern.', 'Produkt', 'module-himmel', 'Solarmodule unter blauem Himmel', '<a href="produkte.html">Produkte</a> / Wechselrichter') + f'''
 <section class="sec"><div class="wrap">
   <div class="inv-top"><div class="sec-head"><p class="kicker">Technische Daten</p><h2 class="split">Drei Größen, eine Serie.</h2><p class="reveal">Alle drei sind einphasige Wechselrichter mit zwei MPP-Trackern und zwei Stringeingängen. Angaben laut Hersteller.</p></div><div class="inv-img reveal">{pic('p-wechselrichter', 'Wechselrichter Huawei SUN2000-L1', '220px')}</div></div>
   <div class="tbl-wrap reveal" tabindex="0" role="region" aria-label="Technische Daten der Wechselrichter, seitlich scrollbar"><table class="tbl"><thead><tr><th scope="col">Kategorie</th>{head_}</tr></thead><tbody>{trs}</tbody></table></div>
@@ -743,7 +668,7 @@ def speicher():
     <p class="note">Rechnerisch bei voll geladenem Speicher und gleichmäßigem Verbrauch, ohne Umwandlungsverluste. Die Speichergrößen sind Beispiele; welche Kapazität zu Ihnen passt, klären wir bei der Planung.</p>
   </div>
 </div></section>'''
-    body = ph('Batteriespeicher', 'Tagsüber liefert die Anlage oft mehr, als Sie brauchen. Ein Speicher hebt den Überschuss für den Abend auf. Wir verbauen Speicher der Serie Huawei LUNA2000.', '5 kW', 'backsteinhaus', 'Backsteinhaus mit Photovoltaik auf dem Satteldach', '<a href="produkte.html">Produkte</a> / Batteriespeicher') + f'''
+    body = ph('Batteriespeicher', 'Tagsüber liefert die Anlage oft mehr, als Sie brauchen. Ein Speicher hebt den Überschuss für den Abend auf. Wir verbauen Speicher der Serie Huawei LUNA2000.', 'Produkt', 'giebel-pv', 'Zwei Giebeldächer mit Solarmodulen', '<a href="produkte.html">Produkte</a> / Batteriespeicher') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head"><p class="kicker">Batterie-Steuereinheit</p><h2 class="split">LUNA2000-5KW-C0.</h2><p class="reveal">Das Leistungsmodul mit Batteriemanagement sitzt oben auf den Batteriemodulen und steuert Laden und Entladen.</p><div class="prod-img reveal">{pic('p-bms', 'Huawei LUNA2000 Leistungsmodul', '355px')}{pic('p-speicher', 'Huawei LUNA2000 Batteriemodul', '355px')}</div></div>
   {spec(bms)}
@@ -767,7 +692,7 @@ def energiezaehler():
             ('Speicher richtig laden', 'Der Speicher lädt nur mit dem, was wirklich übrig ist, und entlädt, wenn das Haus Strom aus dem Netz ziehen würde.'),
             ('Verbrauch sehen', 'In der App sehen Sie nicht nur, was die Anlage erzeugt, sondern auch, was Ihr Haus verbraucht.')]
     us = ''.join(f'<li class="reveal"><h3>{a}</h3><p>{b}</p></li>' for a, b in uses)
-    body = ph('Energiezähler', 'Der Smart Power Sensor sitzt am Netzanschlusspunkt im Zählerschrank. Er misst, wie viel Strom Ihr Haus aus dem Netz bezieht und wie viel es einspeist.', '0,5S', 'flachdach-ballast', 'Modulgestell mit Betonsteinen auf einem Flachdach', '<a href="produkte.html">Produkte</a> / Energiezähler') + f'''
+    body = ph('Energiezähler', 'Der Smart Power Sensor sitzt am Netzanschlusspunkt im Zählerschrank. Er misst, wie viel Strom Ihr Haus aus dem Netz bezieht und wie viel es einspeist.', 'Produkt', 'steinhaus-pv', 'Steinhaus mit Photovoltaikanlage auf dem Dach', '<a href="produkte.html">Produkte</a> / Energiezähler') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head"><p class="kicker">Technische Daten</p><h2 class="split">DTSU666-H.</h2><p class="reveal">Ein Präzisions-Stromsensor für Ströme bis 250 A in Genauigkeitsklasse 0,5S. Angaben laut Hersteller.</p><div class="prod-img reveal">{pic('p-sensor', 'Huawei Smart Power Sensor DTSU666-H', '160px')}</div></div>
   {spec(rows)}
@@ -803,7 +728,7 @@ def referenzen():
             li += f'<li><button type="button" class="lb-open" data-k="{k}" data-full="img/{n}-l.webp" aria-label="Foto vergrößern: {t}">{pic(n, t + ", " + d, "(max-width: 700px) 50vw, 25vw")}</button></li>'
             k += 1
         sec += f'<article class="proj reveal"><div class="proj-h"><h2>{t}</h2><p class="proj-d">{d}</p><p>{txt}</p></div><ul class="proj-g g{len(photos)}">{li}</ul></article>'
-    body = ph('Referenzen', 'Ein paar Dächer, auf denen unsere Anlagen stehen: Flachdach, Satteldach, Blechdach. Alle Fotos stammen von unseren Baustellen.', 'Flach · Sattel · Blech', 'flachdach-stadt', 'Modulreihen auf einem Flachdach in der Stadt', 'Referenzen') + \
+    body = ph('Referenzen', 'Ein paar Dächer, auf denen unsere Anlagen stehen: Flachdach, Satteldach, Blechdach. Alle Fotos stammen von unseren Baustellen.', 'Echte Anlagen von BwM', 'flachdach-stadt', 'Modulreihen auf einem Flachdach in der Stadt', 'Referenzen') + \
         f'<section class="sec"><div class="wrap projs">{sec}</div></section>' + \
         '<div class="lb" role="dialog" aria-modal="true" aria-label="Fotoansicht" hidden><button class="lb-x" type="button" aria-label="Schließen">×</button><button class="lb-p" type="button" aria-label="Vorheriges Foto">‹</button><figure><img alt=""><figcaption></figcaption></figure><button class="lb-n" type="button" aria-label="Nächstes Foto">›</button></div>' + \
         cta('Ihr Dach als nächste Referenz?', 'Schicken Sie uns ein Foto Ihres Daches und Ihren Stromverbrauch. Wir melden uns.')
@@ -816,7 +741,7 @@ def referenzen():
 def ueber_uns():
     facts = [('Inhaber', CO['person']), ('Sitz', f'{CO["street"]}, B-{CO["zip"]} {CO["city"]}, {CO["country"]}'), ('Region', 'Raum Aachen, Ostbelgien, Südlimburg'), ('USt-ID', CO['vat'])]
     fx = ''.join(f'<div><dt>{a}</dt><dd>{b}</dd></div>' for a, b in facts)
-    body = ph('Über uns', 'Solar Technik BwM ist ein Photovoltaik-Fachbetrieb aus Lontzen in Ostbelgien. Wir planen und installieren Anlagen für Kunden in Deutschland, Belgien und den Niederlanden.', 'Lontzen · Aachen · Maastricht', 'bruchsteinhaus', 'Bruchsteinhaus mit Photovoltaikanlage', 'Über uns') + f'''
+    body = ph('Über uns', 'Solar Technik BwM ist ein Photovoltaik-Fachbetrieb aus Lontzen in Ostbelgien. Wir planen und installieren Anlagen für Kunden in Deutschland, Belgien und den Niederlanden.', 'Lontzen · Raum Aachen', 'haus-fertig', 'Reihenhäuser mit Photovoltaik in der Sonne', 'Über uns') + f'''
 <section class="sec"><div class="wrap two">
   <div class="sec-head"><p class="kicker">Wer wir sind</p><h2 class="split">Spezialisiert auf Photovoltaik.</h2></div>
   <div class="prose reveal"><p>Wir haben uns auf die Planung und Installation von hochwertigen Photovoltaikanlagen im Raum Aachen spezialisiert. Um Ihnen ein hohes Maß an Investitionssicherheit für viele Jahre bieten zu können, arbeiten wir ausschließlich mit namhaften Herstellern und deren Qualitätsprodukten.</p>
@@ -848,13 +773,13 @@ ARTICLES = [
         ('Flachdach', '<p>Auf dem Flachdach werden die Module in Reihen aufgeständert, also schräg gestellt. Das Gestell wird mit Betonsteinen beschwert. Wie viel Ballast nötig ist, hängt von Gebäudehöhe, Lage und Windlast ab. Den Abstand zwischen den Reihen planen wir so, dass sich die Reihen möglichst nicht gegenseitig verschatten.</p>'),
         ('Freifläche', '<p>Auf einer Wiese stehen die Module auf einem Gestell am Boden. Neigung und Ausrichtung lassen sich hier frei wählen, weil kein Dach sie vorgibt.</p>'),
         ('Was Sie vorab tun können', '<p>Machen Sie ein Foto der Dacheindeckung aus der Nähe und eines vom ganzen Dach. Damit können wir schon vor dem ersten Termin einschätzen, welches Gestell passt. Im <a href="montage.html#werkzeug">Werkzeug „Befestigung nach Eindeckung“</a> sehen Sie die Varianten nebeneinander.</p>')]),
-    ('ratgeber-hitze.html', 'Warum Solarmodule im Hochsommer weniger leisten', 'Mehr Sonne heißt nicht automatisch mehr Strom: Was der Temperaturkoeffizient im Datenblatt bedeutet, am Beispiel unserer 405-W-Module.', 'blechdach', '4 Minuten', [
+    ('ratgeber-hitze.html', 'Warum Solarmodule im Hochsommer weniger leisten', 'Mehr Sonne heißt nicht automatisch mehr Strom: Was der Temperaturkoeffizient im Datenblatt bedeutet, am Beispiel unserer 405-W-Module.', 'module-himmel', '4 Minuten', [
         ('Die 405 W gelten bei 25 °C', '<p>Auf jedem Modul steht eine Nennleistung, bei unseren <a href="module.html">JA-Solar-Modulen</a> 405 W. Gemessen wird sie unter Standard-Testbedingungen: 1000 W Einstrahlung pro Quadratmeter und 25 °C Zelltemperatur. Auf einem Dach im Juli sind die Zellen aber deutlich wärmer als 25 °C.</p>'),
         ('Was der Temperaturkoeffizient sagt', '<p>Im Datenblatt steht für die Leistung ein Temperaturkoeffizient von −0,350 % pro °C. Das heißt: Für jedes Grad über 25 °C sinkt die Leistung um 0,35 Prozent. Bei 60 °C Zelltemperatur sind das 35 Grad mehr, also 12,25 Prozent weniger. Aus 405 W werden rechnerisch rund 355 W.</p>'),
         ('Die Nennbetriebstemperatur', '<p>Das Datenblatt nennt außerdem eine Nennbetriebstemperatur (NOCT) von 45 °C. Sie gilt bei 800 W Einstrahlung, 20 °C Luft und leichtem Wind. Das ist ein guter Anhaltspunkt für einen normalen sonnigen Tag. An heißen, windstillen Tagen liegt die Zelltemperatur darüber.</p>'),
         ('Warum der Sommer trotzdem der beste Monat ist', '<p>Im Sommer scheint die Sonne länger und steht höher. Das gleicht den Hitzeverlust mehr als aus. Die besten Stunden sind oft klare, kühle Tage im Frühjahr mit viel Sonne und wenig Wärme.</p>'),
         ('Was hilft', '<p>Luft unter den Modulen kühlt. Deshalb achten wir bei der Montage darauf, dass die Module mit Abstand über dem Dach liegen und die Luft darunter zirkulieren kann. Probieren Sie es im <a href="module.html#werkzeug">Hitze-Rechner</a> selbst aus.</p>')]),
-    ('ratgeber-anfrage.html', 'Was wir für ein Angebot von Ihnen brauchen', 'Stromverbrauch, Dach, Heizung, Warmwasser: welche Angaben eine Anfrage schnell machen und wo Sie sie finden.', 'backsteinhaus', '3 Minuten', [
+    ('ratgeber-anfrage.html', 'Was wir für ein Angebot von Ihnen brauchen', 'Stromverbrauch, Dach, Heizung, Warmwasser: welche Angaben eine Anfrage schnell machen und wo Sie sie finden.', 'dach-vorher', '3 Minuten', [
         ('Der Stromverbrauch', '<p>Die wichtigste Zahl steht auf Ihrer letzten Jahresabrechnung: der Verbrauch in Kilowattstunden (kWh) pro Jahr. Daraus leiten wir ab, wie groß die Anlage sein sollte und ob sich ein Speicher lohnt.</p>'),
         ('Das Dach', '<p>Dachform, Eindeckung und ungefähre Größe. Am einfachsten sind zwei, drei Fotos: eines vom ganzen Dach, eines von der Eindeckung aus der Nähe und, wenn möglich, eines vom Dachboden mit Sparren. Stehen Bäume, Kamine oder Gauben im Weg, gehören sie mit aufs Foto.</p>'),
         ('Heizung und Warmwasser', '<p>Wird mit Gas, Öl, Wärmepumpe oder Strom geheizt? Kommt das Warmwasser aus der Heizung oder aus einem elektrischen Boiler? Das zeigt, wohin Solarstrom im Haus fließen kann, heute oder nach einem späteren Umbau.</p>'),
@@ -879,7 +804,7 @@ def article(a):
     toc = ''.join(f'<li><a href="#a{i}">{h}</a></li>' for i, (h, x) in enumerate(parts))
     txt = ''.join(f'<h2 id="a{i}">{h}</h2>{x}' for i, (h, x) in enumerate(parts))
     others = ''.join(f'<li><a href="{x[0]}">{x[1]} {ARROW}</a></li>' for x in ARTICLES if x[0] != f)
-    body = ph(t, d, 'Ratgeber · ' + mins, ph_, t, '<a href="ratgeber.html">Ratgeber</a> / Artikel') + f'''
+    body = ph(t, d, 'Ratgeber · ' + mins + ' Lesezeit', ph_, t, '<a href="ratgeber.html">Ratgeber</a> / Artikel') + f'''
 <section class="sec"><div class="wrap art">
   <aside class="art-toc"><p class="kicker">Inhalt</p><ol>{toc}</ol></aside>
   <article class="prose art-body">{txt}<p class="art-meta">Stand: September 2026 · Solar Technik BwM, {CO['city']}</p></article>
@@ -922,9 +847,9 @@ def faq():
 # =====================================================================
 def kontakt():
     bbox = '5.9636,50.6900,6.0036,50.7100'
-    body = ph('Kontakt', 'Erzählen Sie uns von Ihrem Dach. Mit Stromverbrauch, Heizung und Warmwasser können wir die Anlage schon grob auslegen, bevor wir vorbeikommen.', 'Lontzen · Raum Aachen', None, '', 'Kontakt') + f'''
+    body = ph('Kontakt', 'Erzählen Sie uns von Ihrem Dach. Mit Stromverbrauch, Heizung und Warmwasser können wir die Anlage schon grob auslegen, bevor wir vorbeikommen.', 'Wir freuen uns auf Sie', None, '', 'Kontakt') + f'''
 <section class="sec"><div class="wrap k-grid">
-  <div class="k-form"><div class="ask-sheet light"><span class="reg tl" aria-hidden="true"></span><span class="reg tr" aria-hidden="true"></span><span class="reg bl" aria-hidden="true"></span><span class="reg br" aria-hidden="true"></span>{form('k')}</div></div>
+  <div class="k-form"><div class="ask-sheet light">{form('k')}</div></div>
   <aside class="k-side">
     <div class="k-card reveal"><h2 class="h3">{CO['name']}</h2><ul class="ask-contact"><li>{TEL}<a href="tel:{CO['telh']}">{CO['tel']}</a></li><li>{MAIL}<a href="mailto:{CO['mail']}">{CO['mail']}</a></li><li>{PIN}<span>{CO['person']}<br>{CO['street']}<br>B-{CO['zip']} {CO['city']}, {CO['country']}</span></li></ul></div>
     <div class="k-map reveal" data-map="https://www.openstreetmap.org/export/embed.html?bbox={bbox}&amp;layer=mapnik&amp;marker={CO['lat']},{CO['lon']}">
@@ -939,18 +864,18 @@ def kontakt():
 
 
 def danke():
-    body = f'''<section class="bh no-photo solo"><div class="wrap"><div class="dimline" aria-hidden="true"><i class="dl-a"></i><span>Anfrage angekommen</span><i class="dl-b"></i></div><h1 class="split">Danke für Ihre Anfrage.</h1><p class="lead reveal">Wir melden uns so bald wie möglich. Wenn Sie Fotos von Dach oder Zählerschrank haben, schicken Sie sie gern an <a href="mailto:{CO['mail']}">{CO['mail']}</a>.</p><p class="reveal"><a class="btn cu mag" href="index.html">Zur Startseite {ARROW}</a> <a class="btn line" href="ratgeber-anfrage.html">Was wir noch brauchen</a></p></div></section>'''
+    body = f'''<section class="sh no-photo solo"><div class="wrap"><span class="sh-sun solo" aria-hidden="true"></span><p class="kicker">Anfrage angekommen</p><h1 class="split">Danke für Ihre Anfrage.</h1><p class="lead reveal">Wir melden uns so bald wie möglich. Wenn Sie Fotos von Dach oder Zählerschrank haben, schicken Sie sie gern an <a href="mailto:{CO['mail']}">{CO['mail']}</a>.</p><p class="reveal"><a class="btn sun mag" href="index.html">Zur Startseite {ARROW}</a> <a class="btn line" href="ratgeber-anfrage.html">Was wir noch brauchen</a></p></div></section>'''
     return write(dict(file='danke.html', title='Danke für Ihre Anfrage | Solar Technik BwM', desc='Ihre Anfrage an Solar Technik BwM ist angekommen.', noindex=True), body)
 
 
 def notfound():
     li = ''.join(f'<li><a href="{a}">{t}</a></li>' for a, t in [('index.html', 'Startseite'), ('leistungen.html', 'Leistungen'), ('produkte.html', 'Produkte'), ('referenzen.html', 'Referenzen'), ('kontakt.html', 'Kontakt')])
-    body = f'''<section class="bh no-photo solo"><div class="wrap"><div class="dimline" aria-hidden="true"><i class="dl-a"></i><span>Fehler 404</span><i class="dl-b"></i></div><h1 class="split">Diese Seite sitzt nicht auf der Schiene.</h1><p class="lead reveal">Die Adresse gibt es nicht (mehr). Vielleicht hilft einer dieser Wege weiter:</p><ul class="nf reveal">{li}</ul></div></section>'''
+    body = f'''<section class="sh no-photo solo"><div class="wrap"><span class="sh-sun solo" aria-hidden="true"></span><p class="kicker">Fehler 404</p><h1 class="split">Hier scheint leider nichts.</h1><p class="lead reveal">Die Adresse gibt es nicht (mehr). Vielleicht hilft einer dieser Wege weiter:</p><ul class="nf reveal">{li}</ul></div></section>'''
     return write(dict(file='404.html', title='Seite nicht gefunden | Solar Technik BwM', desc='Diese Seite gibt es nicht. Weiter zur Startseite von Solar Technik BwM.', noindex=True, body='quiet'), body)
 
 
 def impressum():
-    body = ph('Impressum', 'Angaben zum Anbieter dieser Website.', 'Anbieter', None, '', 'Impressum') + f'''
+    body = ph('Impressum', 'Angaben zum Anbieter dieser Website.', 'Rechtliches', None, '', 'Impressum') + f'''
 <section class="sec"><div class="wrap narrow prose legal">
 <h2>Anbieter</h2><p>{CO['name']}<br>Inhaber: {CO['person']}<br>{CO['street']}<br>B-{CO['zip']} {CO['city']}<br>{CO['country']}</p>
 <h2>Kontakt</h2><p>Telefon: <a href="tel:{CO['telh']}">{CO['tel']}</a><br>E-Mail: <a href="mailto:{CO['mail']}">{CO['mail']}</a></p>
@@ -964,7 +889,7 @@ def impressum():
 
 
 def datenschutz():
-    body = ph('Datenschutz', 'Wie wir mit Ihren Daten umgehen, wenn Sie diese Website besuchen oder uns eine Anfrage schicken.', 'DSGVO', None, '', 'Datenschutz') + f'''
+    body = ph('Datenschutz', 'Wie wir mit Ihren Daten umgehen, wenn Sie diese Website besuchen oder uns eine Anfrage schicken.', 'Rechtliches', None, '', 'Datenschutz') + f'''
 <section class="sec"><div class="wrap narrow prose legal">
 <h2>Verantwortlicher</h2><p>{CO['name']}, {CO['person']}, {CO['street']}, B-{CO['zip']} {CO['city']}, {CO['country']}. E-Mail: <a href="mailto:{CO['mail']}">{CO['mail']}</a>, Telefon: {CO['tel']}.</p>
 <h2>Kurz gesagt</h2><p>Diese Website setzt keine Cookies, nutzt kein Tracking und keine Analyse-Werkzeuge. Schriften werden von unserem eigenen Server geladen. Eine Karte wird nur geladen, wenn Sie darauf klicken.</p>

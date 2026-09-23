@@ -1,4 +1,4 @@
-/* Solar Technik BwM – Skript. GSAP + ScrollTrigger + Lenis (CDN). Tweens nur auf transform/opacity; Blenden per clip-path. */
+/* Solar Technik BwM – Skript (2. Fassung). GSAP + ScrollTrigger + Lenis (CDN). Tweens nur auf transform/opacity; Blenden per clip-path. */
 (() => {
   const root = document.documentElement;
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -38,10 +38,8 @@
   let lastY = scrollY;
   const onScrollHead = () => {
     const y = scrollY;
-    const overUntil = sceneEl && motion ? sceneEl.offsetHeight - innerHeight - 8 : (sceneEl ? 40 : -1);
-    const over = !!sceneEl && motion && y < overUntil && !document.body.classList.contains('menu-open');
-    head.classList.toggle('over', over);
-    if (!document.body.classList.contains('menu-open') && !dds.some(li => li.classList.contains('open'))) {
+    const over = false;
+        if (!document.body.classList.contains('menu-open') && !dds.some(li => li.classList.contains('open'))) {
       if (!over && y > 300 && y > lastY + 6 && y - lastY < 400) head.classList.add('hide');
       else if (y < lastY - 6 || over || y < 300) head.classList.remove('hide');
     }
@@ -92,8 +90,8 @@
   if (!seen && motion) {
     try { sessionStorage.setItem('bwm-intro', '1'); } catch (e) {}
     document.body.classList.add('intro-on');
-    const svg = $('svg', intro), word = $('span', intro);
-    gsap.fromTo(svg, { rotation: -90, scale: .5, opacity: 0 }, { rotation: 0, scale: 1, opacity: 1, duration: .6, ease: 'power3.out' });
+    const svg = $('.sun', intro), word = $('.iw', intro);
+    gsap.fromTo(svg, { y: 60, scale: .5, opacity: 0 }, { y: 0, scale: 1, opacity: 1, duration: .7, ease: 'power3.out' });
     gsap.fromTo(word, { x: -16, opacity: 0 }, { x: 0, opacity: 1, duration: .5, delay: .25, ease: 'power3.out' });
     gsap.to(intro, { yPercent: -101, duration: .7, ease: 'power3.inOut', delay: 1, onComplete: () => document.body.classList.remove('intro-on') });
     introDelay = 1.3;
@@ -131,7 +129,7 @@
     b.addEventListener('pointerleave', () => { xTo(0); yTo(0); });
   });
   // 3D-Neigung auf Karten
-  if (fine && motion) $$('.more-list a, .plist a, .card').forEach(c => {
+  if (fine && motion) $$('.more-list a, .plist a').forEach(c => {
     const rx = gsap.quickTo(c, 'rotationX', { duration: .5, ease: 'power3' }), ry = gsap.quickTo(c, 'rotationY', { duration: .5, ease: 'power3' });
     const k = c.classList.contains('card') ? 1.5 : 5;
     gsap.set(c, { transformPerspective: 1000 });
@@ -155,178 +153,103 @@
   else { const st = $('.scene-static'); if (st) st.remove(); }
   // Späte Bilder (Szene ab Foto 2 erst nach dem load-Ereignis)
   const late = () => $$('img[data-late]').forEach(i => { if (i.dataset.srcset) i.srcset = i.dataset.srcset; if (i.dataset.src) i.src = i.dataset.src; });
-  if (!motion) $$('.scene-pin img[data-late]').forEach(i => i.removeAttribute('data-late'));
-  else if (document.readyState === 'complete') late(); else addEventListener('load', late);
+  if (document.readyState === 'complete') late(); else addEventListener('load', late);
   if (hasGsap) { addEventListener('load', () => ScrollTrigger.refresh()); document.fonts && document.fonts.ready.then(() => ScrollTrigger.refresh()); }
 
-  // ---------- Bemaßungs-Kopf der Unterseiten ----------
-  const bh = $('.bh');
-  if (bh && motion) {
-    const d = introDelay * .8;
-    gsap.fromTo($$('.dimline i', bh), { scaleX: 0 }, { scaleX: 1, duration: 1, ease: 'expo.out', delay: d + .1 });
-    gsap.fromTo($$('.dimline span', bh), { opacity: 0 }, { opacity: 1, duration: .4, delay: d + .5 });
-    const img = $('.bh-img', bh);
+  // ---------- Sonnen-Kopf der Unterseiten: die Sonne geht hinter dem Foto auf ----------
+  const sh = $('.sh');
+  if (sh && motion) {
+    const d = introDelay * .8, sun = $('.sh-sun', sh), img = $('.sh-img', sh);
+    if (sun) gsap.fromTo(sun, { yPercent: 60, scale: .6, opacity: 0 }, { yPercent: 0, scale: 1, opacity: sun.classList.contains('solo') ? .9 : 1, duration: 1.4, ease: 'expo.out', delay: d + .1 });
     if (img) {
-      gsap.fromTo(img, { scale: .6, rotation: -8, opacity: 0 }, { scale: 1, rotation: 0, opacity: 1, duration: 1.2, ease: 'expo.out', delay: d + .15 });
-      gsap.fromTo($('.bh-line', bh), { scale: .92, opacity: 0 }, { scale: 1, opacity: .8, duration: 1.2, ease: 'expo.out', delay: d + .35 });
-      gsap.fromTo($('.bh-dim-v i', bh), { scaleY: 0 }, { scaleY: 1, duration: 1, ease: 'expo.out', delay: d + .5 });
-      gsap.to($('.bh-img img', bh), { yPercent: 8, ease: 'none', scrollTrigger: { trigger: bh, start: 'top top', end: 'bottom top', scrub: .6 } });
+      gsap.fromTo(img, { scale: .85, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.1, ease: 'expo.out', delay: d });
+      gsap.to($('img', img), { yPercent: -10, ease: 'none', scrollTrigger: { trigger: sh, start: 'top top', end: 'bottom top', scrub: .6 } });
+      if (sun) gsap.to(sun, { y: -60, ease: 'none', scrollTrigger: { trigger: sh, start: 'top top', end: 'bottom top', scrub: .6 } });
     }
   }
 
   // =================== STARTSEITE ===================
-  // Szene „Was eine Anlage trägt“: Schiene → Blechdach → Flachdach → Ziegeldach → Bruchsteinhaus.
+  // Szene „Von Ihrem Dach zum eigenen Sonnenstrom“: Dach → Planung → Montage → Anschluss → fertiges Haus.
   // Fester Zeitplan: Text raus → Blende → nächster Text rein. Nie zwei Texte gleichzeitig.
   const scene = $('.scene');
   if (scene && motion) {
-    const fr = $$('.frame', scene), caps = $$('.cap', scene), pin = $('.scene-pin', scene);
-    const bar = $('.sr-bar b', scene), clamps = $$('.srail i', scene);
-    const W = () => pin.clientWidth, Hh = () => pin.clientHeight;
-    // Profil-Maske: Querschnitt der Schiene wächst über den Rand
-    const PROF = [[0, 0], [38, 0], [38, 8], [28, 8], [28, 24], [72, 24], [72, 8], [62, 8], [62, 0], [100, 0], [100, 100], [62, 100], [62, 92], [72, 92], [72, 76], [28, 76], [28, 92], [38, 92], [38, 100], [0, 100]];
-    const mask = p => {
-      if (p >= 1) { fr[1].style.clipPath = 'none'; return; }
-      const w = W(), h = Hh(), s0 = Math.min(w, h) * .2, s1 = Math.max(2.05 * h, 1.05 * w);
-      const e = p * p * (3 - 2 * p), S = s0 + (s1 - s0) * e, ox = w / 2 - S / 2, oy = h / 2 - S / 2;
-      fr[1].style.clipPath = 'polygon(' + PROF.map(([x, y]) => `${(ox + x * S / 100).toFixed(1)}px ${(oy + y * S / 100).toFixed(1)}px`).join(',') + ')';
+    const fr = $$('.frame', scene), caps = $$('.cap', scene), dots = $$('.sdots i', scene);
+    const sm = e => e * e * (3 - 2 * e);
+    // 1 Sonnenaufgang: eine Kreisfläche steigt vom unteren Rand auf wie die Sonne am Horizont
+    const rise = p => { if (p >= 1) { fr[1].style.clipPath = 'none'; return; } const e = sm(p); fr[1].style.clipPath = `circle(${(6 + 150 * Math.pow(e, 1.6)).toFixed(2)}% at 50% ${(118 - 68 * e).toFixed(2)}%)`; };
+    // 2 Sonnenstrahlen: sechs Strahlen fächern aus der oberen rechten Ecke auf, bis sie das Bild füllen
+    const rays = p => {
+      if (p >= 1) { fr[2].style.clipPath = 'none'; return; }
+      const e = sm(p), n = 6, span = 90 / n, pts = [];
+      for (let k = 0; k < n; k++) {
+        const a0 = (180 + k * span) * Math.PI / 180, a1 = (180 + k * span + span * Math.min(1, .15 + e)) * Math.PI / 180, R = 260 * Math.min(1, e * 1.6 + .05);
+        pts.push('100% 0%', `${(100 + R * Math.cos(a0)).toFixed(1)}% ${(-R * Math.sin(a0)).toFixed(1)}%`, `${(100 + R * Math.cos(a1)).toFixed(1)}% ${(-R * Math.sin(a1)).toFixed(1)}%`);
+      }
+      pts.push('100% 0%');
+      fr[2].style.clipPath = `polygon(${pts.join(',')})`;
     };
-    // Sonnenbogen: ein Kreis zieht auf einer Bahn über den Himmel und wird zum Bild
-    const sun = p => {
-      if (p >= 1) { fr[3].style.clipPath = 'none'; return; }
-      const a = Math.PI * (1 - Math.min(1, p * 1.25)), cx = 50 - 40 * Math.cos(a) * (1 - p * .2), cy = 88 - 62 * Math.sin(a);
-      const r = p < .55 ? 4 + p * 6 : 7.3 + Math.pow((p - .55) / .45, 2) * 150;
-      fr[3].style.clipPath = `circle(${r.toFixed(2)}% at ${cx.toFixed(2)}% ${cy.toFixed(2)}%)`;
-    };
-    // Giebel-Blende: ein Giebeldreieck steigt auf und öffnet sich zum ganzen Bild
+    // 3 Dachschräge: eine schräge Kante in Dachneigung zieht von unten links nach oben rechts über das Bild
+    const pitch = p => { if (p >= 1) { fr[3].style.clipPath = 'none'; return; } const b = 200 - 215 * sm(p); fr[3].style.clipPath = `polygon(-5% 105%, -5% ${b.toFixed(2)}%, 105% ${(b - 75).toFixed(2)}%, 105% 105%)`; };
+    // 4 Giebel: ein Hausgiebel steigt auf und öffnet sich zum ganzen Bild
     const gable = p => {
       if (p >= 1) { fr[4].style.clipPath = 'none'; return; }
-      const e = p * p * (3 - 2 * p), wd = 26 + 160 * e, l = 50 - wd / 2, r = 50 + wd / 2, eav = 132 - 150 * e, apx = eav - 30 - 10 * e;
+      const e = sm(p), wd = 26 + 160 * e, l = 50 - wd / 2, r = 50 + wd / 2, eav = 132 - 150 * e, apx = eav - 30 - 10 * e;
       fr[4].style.clipPath = `polygon(${l.toFixed(2)}% 101%, ${l.toFixed(2)}% ${eav.toFixed(2)}%, 50% ${apx.toFixed(2)}%, ${r.toFixed(2)}% ${eav.toFixed(2)}%, ${r.toFixed(2)}% 101%)`;
     };
-    mask(0); sun(0); gable(0);
-    gsap.set(fr[2], { rotationX: 84, transformOrigin: '50% 100%', transformPerspective: 1100 });
-    const T = { in: .32, out: .3, hold: .8, move: 1.1 };
+    const blends = [null, rise, rays, pitch, gable];
+    blends.forEach(fn => fn && fn(0));
+    const T = { in: .32, out: .3, hold: .85, move: 1.15 };
     const arrive = [0];
-    const tl = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: scene, start: 'top top', end: 'bottom bottom', scrub: .7, invalidateOnRefresh: true,
-      onUpdate: () => { const tt = tl.time(); clamps.forEach((c, k) => c.classList.toggle('on', tt >= arrive[k] - .01)); },
-      onRefresh: () => { const p = pr.m; mask(p); } } });
-    const pr = { m: 0, s: 0, g: 0 };
-    const capIn = (c, at) => tl.fromTo(c, { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0, duration: T.in, ease: 'power2.out', immediateRender: false }, at);
-    const capOut = (c, at) => tl.to(c, { autoAlpha: 0, y: -34, duration: T.out, ease: 'power2.in' }, at);
-    const railTo = (k, at) => tl.to(bar, { scaleX: k / 4, duration: T.move, ease: 'power2.inOut' }, at);
-    // Einstieg: Text steht beim Laden
-    gsap.fromTo(caps[0], { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 1, ease: 'expo.out', delay: introDelay + .1 });
-    gsap.fromTo($('img', fr[0]), { scale: 1.14 }, { scale: 1.04, duration: 2.4, ease: 'power2.out', delay: introDelay });
-    let t = .55;
-    capOut(caps[0], t); t += T.out;
-    // 1 → 2: Profil-Maske
-    tl.set(fr[1], { visibility: 'visible' }, t);
-    tl.to(pr, { m: 1, duration: T.move * 1.15, ease: 'power1.inOut', onUpdate: () => mask(pr.m) }, t);
-    tl.fromTo($('img', fr[1]), { scale: 1.18 }, { scale: 1, duration: T.move * 1.15 + T.in + T.hold, immediateRender: false }, t);
-    tl.to($('.fimg', fr[0]), { scale: 1.2, opacity: .5, duration: T.move * 1.15, ease: 'power1.in' }, t);
-    railTo(1, t); t += T.move * 1.15; arrive[1] = t;
-    tl.set(fr[0], { visibility: 'hidden' }, t);
-    capIn(caps[1], t); t += T.in + T.hold; capOut(caps[1], t); t += T.out;
-    // 2 → 3: Aufständerung (das Foto klappt aus der Waagerechten hoch wie ein Modul auf dem Gestell)
-    tl.set(fr[2], { visibility: 'visible' }, t);
-    tl.to(fr[2], { rotationX: 0, duration: T.move, ease: 'power2.out' }, t);
-    tl.to($('.fimg', fr[1]), { opacity: .35, duration: T.move }, t);
-    tl.fromTo($('img', fr[2]), { scale: 1.12 }, { scale: 1, duration: T.move + T.in + T.hold, immediateRender: false }, t);
-    railTo(2, t); t += T.move; arrive[2] = t;
-    tl.set(fr[1], { visibility: 'hidden' }, t);
-    capIn(caps[2], t); t += T.in + T.hold; capOut(caps[2], t); t += T.out;
-    // 3 → 4: Sonnenbogen
-    tl.set(fr[3], { visibility: 'visible' }, t);
-    tl.to(pr, { s: 1, duration: T.move * 1.3, ease: 'none', onUpdate: () => sun(pr.s) }, t);
-    tl.fromTo($('img', fr[3]), { scale: 1.1 }, { scale: 1, duration: T.move * 1.3 + T.in + T.hold, immediateRender: false }, t);
-    tl.to($('.fimg', fr[2]), { opacity: .45, duration: T.move * 1.3 }, t);
-    railTo(3, t); t += T.move * 1.3; arrive[3] = t;
-    tl.set(fr[2], { visibility: 'hidden' }, t);
-    capIn(caps[3], t); t += T.in + T.hold; capOut(caps[3], t); t += T.out;
-    // 4 → 5: Giebel-Blende
-    tl.set(fr[4], { visibility: 'visible' }, t);
-    tl.to(pr, { g: 1, duration: T.move * 1.1, ease: 'none', onUpdate: () => gable(pr.g) }, t);
-    tl.fromTo($('img', fr[4]), { scale: 1.14 }, { scale: 1, duration: T.move * 1.1 + T.in + T.hold, immediateRender: false }, t);
-    tl.to($('.fimg', fr[3]), { opacity: .4, duration: T.move * 1.1 }, t);
-    railTo(4, t); t += T.move * 1.1; arrive[4] = t;
-    tl.set(fr[3], { visibility: 'hidden' }, t);
-    capIn(caps[4], t); t += T.in;
-    tl.to({}, { duration: 1 }, t);
-    addEventListener('resize', () => { mask(pr.m); });
-  }
-
-  // ---------- Dreiländereck: Grenzen zeichnen sich ----------
-  const map = $('.map');
-  if (map && motion) {
-    const tlm = gsap.timeline({ scrollTrigger: { trigger: '.region', start: 'top 75%', end: 'center 45%', scrub: .8 } });
-    tlm.fromTo($$('.border', map), { strokeDashoffset: 1 }, { strokeDashoffset: 0, stagger: .15, duration: 1, ease: 'none' }, 0);
-    tlm.fromTo($$('.pl', map), { opacity: 0, y: 10 }, { opacity: 1, y: 0, stagger: .08, duration: .3 }, .5);
-    tlm.fromTo($$('.ctry, .tri, .tri-l', map), { opacity: 0 }, { opacity: 1, duration: .4 }, .2);
-    gsap.fromTo($('.pl.home .ring', map), { scale: .6, opacity: .7, transformOrigin: '50% 50%' }, { scale: 1.6, opacity: 0, duration: 1.8, repeat: -1, ease: 'power2.out' });
-  }
-
-  // ---------- Schichtaufbau: die Zeichnung fährt auseinander (kurzer Pin) ----------
-  const layers = $('.layers');
-  if (layers) {
-    const svg = $('.layers-svg', layers), items = $$('.layers-list li', layers);
-    const order = ['klemme', 'modul', 'schiene', 'haken', 'dach'];
-    const mark = k => items.forEach(li => li.classList.toggle('on', li.dataset.l === order[k]));
-    if (motion) {
-      svg.setAttribute('viewBox', '0 20 900 410');
-      const g = l => $(`.ly[data-l="${l}"]`, svg);
-      const dims = $('.dims', svg);
-      gsap.set(dims, { opacity: 0 });
-      const tly = gsap.timeline({ defaults: { ease: 'power2.inOut' }, scrollTrigger: { trigger: layers, start: 'top top', end: '+=170%', pin: true, scrub: .7, anticipatePin: 1,
-        onUpdate: s => mark(Math.min(4, Math.floor(s.progress * 5.2))) } });
-      order.slice(0, 4).forEach((l, i) => tly.to(g(l), { y: +g(l).dataset.dy, duration: 1 }, i * .8));
-      tly.to(dims, { opacity: 1, duration: .6 }, 3.6);
-      tly.to({}, { duration: .5 });
-      mark(0);
-    } else {
-      // Ohne Bewegung: fertig auseinandergezogene Zeichnung
-      svg.setAttribute('viewBox', '0 20 900 410');
-      $$('.ly', svg).forEach(g => g.setAttribute('transform', `translate(0 ${g.dataset.dy})`));
+    const tl = gsap.timeline({ defaults: { ease: 'none' }, scrollTrigger: { trigger: scene, start: 'top top', end: 'bottom bottom', scrub: .7,
+      onUpdate: () => { const tt = tl.time(); dots.forEach((d, k) => d.classList.toggle('on', tt >= arrive[k] - .01)); } } });
+    // Karte und Text blenden gemeinsam aus und ein; dazwischen tauscht der Text, damit die Karte immer nur so hoch ist wie ihr Text
+    const card = $('.scard', scene);
+    const capIn = (c, at) => { tl.set(c, { display: 'block', autoAlpha: 1 }, at); tl.fromTo(card, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: T.in, ease: 'power2.out', immediateRender: false }, at); };
+    const capOut = (c, at) => { tl.to(card, { autoAlpha: 0, y: 30, duration: T.out, ease: 'power2.in' }, at); tl.set(c, { display: 'none' }, at + T.out); };
+        gsap.fromTo('.scard', { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1.1, ease: 'expo.out', delay: introDelay });
+    gsap.fromTo($('img', fr[0]), { scale: 1.12 }, { scale: 1.02, duration: 2.4, ease: 'power2.out', delay: introDelay });
+    dots[0].classList.add('on');
+    let t = .5;
+    for (let k = 1; k < fr.length; k++) {
+      capOut(caps[k - 1], t); t += T.out;
+      const pr = { p: 0 }, fn = blends[k];
+      tl.set(fr[k], { visibility: 'visible' }, t);
+      tl.to(pr, { p: 1, duration: T.move, onUpdate: () => fn(pr.p) }, t);
+      tl.fromTo($('img', fr[k]), { scale: 1.14 }, { scale: 1, duration: T.move + T.in + T.hold, immediateRender: false }, t);
+      tl.to($('img', fr[k - 1]), { scale: '+=0.06', duration: T.move }, t);
+      t += T.move; arrive[k] = t;
+      tl.set(fr[k - 1], { visibility: 'hidden' }, t);
+      capIn(caps[k], t); t += T.in + (k < fr.length - 1 ? T.hold : 0);
     }
+    tl.to({}, { duration: 1 }, t);
   }
 
-  // ---------- Leistungs-Schiene: Klemmen gleiten an ihren Platz ----------
-  const rail = $('.rail-wrap');
-  if (rail && motion) {
-    const mm = gsap.matchMedia();
-    const its = $$('.ri', rail);
-    mm.add('(min-width: 701px)', () => {
-      // Gleicher Weg für alle, die vorderen starten früher: so überholt nie eine Klemme die andere (keine überlagerten Buchstaben)
-      gsap.fromTo(its, { x: () => innerWidth * .3, opacity: 0 }, { x: 0, opacity: 1, ease: 'power2.out', stagger: .12, scrollTrigger: { trigger: rail, start: 'top 88%', end: 'top 40%', scrub: .8, invalidateOnRefresh: true } });
-      gsap.fromTo($('.rail-bar', rail), { scaleX: .2, transformOrigin: '0 50%' }, { scaleX: 1, ease: 'none', scrollTrigger: { trigger: rail, start: 'top 90%', end: 'top 45%', scrub: .8 } });
-    });
-    mm.add('(max-width: 700px)', () => {
-      its.forEach(it => gsap.fromTo(it, { x: 60, opacity: 0 }, { x: 0, opacity: 1, ease: 'power2.out', scrollTrigger: { trigger: it, start: 'top 92%', end: 'top 65%', scrub: .6 } }));
-      gsap.fromTo($('.rail-bar', rail), { scaleY: 0, transformOrigin: '50% 0' }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: rail, start: 'top 80%', end: 'bottom 70%', scrub: .6 } });
-    });
+  // ---------- Einleitung: Fotos im Satz wachsen mit dem Scrollen ----------
+  const chips_ = $$('.ichip');
+  if (chips_.length && motion) {
+    chips_.forEach((c, i) => gsap.fromTo(c, { scale: 0, rotation: -12 }, { scale: 1, rotation: 0, ease: 'none', scrollTrigger: { trigger: c, start: 'top 92%', end: 'top 58%', scrub: .7 } }));
+    gsap.fromTo('.big-line', { y: 50 }, { y: 0, ease: 'none', scrollTrigger: { trigger: '.intro', start: 'top 95%', end: 'top 40%', scrub: .7 } });
+  }
+
+  // ---------- Leistungen: Foto klebt links, wechselt mit dem Kapitel ----------
+  const story = $('.story-grid');
+  if (story && hasGsap) {
+    const imgs = $$('.st-img', story), chs = $$('.ch', story);
+    const set = i => { imgs.forEach(x => x.classList.toggle('on', +x.dataset.i === i)); chs.forEach(x => x.classList.toggle('on', +x.dataset.i === i)); };
+    chs.forEach((ch, i) => ScrollTrigger.create({ trigger: ch, start: 'top 60%', end: 'bottom 60%', onToggle: s => s.isActive && set(i) }));
+    set(0);
+    if (motion) gsap.fromTo('.st-stick', { scale: .9, borderRadius: 60 }, { scale: 1, borderRadius: 28, ease: 'none', scrollTrigger: { trigger: story, start: 'top 90%', end: 'top 30%', scrub: .7 } });
   }
 
   // ---------- Dachform-Wähler ----------
   const roofs = $('.roof-ui');
   if (roofs) {
-    const SH = { flachdach: '60,190 60,95 200,95 200,95 340,95 340,190', satteldach: '60,190 60,115 200,40 200,40 340,115 340,190', pultdach: '60,190 60,60 200,85 200,85 340,110 340,190', freiflaeche: '40,190 40,190 200,190 200,190 360,190 360,190' };
-    const TX = {
-      flachdach: ['Flachdach', 'Die Module stehen in Reihen auf Gestellen, beschwert mit Betonsteinen. Neigung und Reihenabstand planen wir so, dass sich die Reihen nicht verschatten.', 'flachdach-reihen', 'Aufgeständerte Modulreihen auf einem Flachdach'],
-      satteldach: ['Satteldach', 'Dachhaken aus Edelstahl laufen unter der Pfanne hindurch, darauf liegen die Schienen und darauf die Module, parallel zur Dachfläche.', 'ziegeldach', 'Solarmodule auf einem dunklen Ziegeldach'],
-      pultdach: ['Pultdach', 'Eine Dachfläche, eine Richtung. Je nach Eindeckung setzen wir Dachhaken oder Trapezblechschuhe. Im Bild: ein Blechdach mit Trapezblechschuhen.', 'blechdach-weit', 'Solarmodule auf einem Blechdach'],
-      freiflaeche: ['Freifläche', 'Auf der Wiese steht das Gestell auf dem Boden. Neigung und Ausrichtung bestimmen wir frei, weil kein Dach sie vorgibt.', null, ''],
-    };
-    const tabs = $$('[role=tab]', roofs), house = $('.house', roofs), panel = $('#rp');
-    const photo = $('.roof-photo', roofs), img = $('.rp-img', roofs);
+    const tabs = $$('[role=tab]', roofs), panel = $('#rp');
     const setRoof = (k, focus) => {
       tabs.forEach(b => { const on = b.dataset.roof === k; b.setAttribute('aria-selected', on ? 'true' : 'false'); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
       panel.setAttribute('aria-labelledby', 'rt-' + k);
-      if (hasGsap && !reduce) gsap.to(house, { attr: { points: SH[k] }, duration: .7, ease: 'expo.out' }); else house.setAttribute('points', SH[k]);
-      $$('.rm', roofs).forEach(g => g.classList.toggle('on', g.classList.contains('rm-' + k)));
-      const [t, d, ph, alt] = TX[k];
-      $('.roof-t', roofs).textContent = t; $('.roof-d', roofs).textContent = d;
-      photo.classList.toggle('none', !ph);
-      if (ph) { img.style.opacity = 0; setTimeout(() => { img.srcset = `img/${ph}-m.webp 800w, img/${ph}-l.webp 1600w`; img.src = `img/${ph}-m.webp`; img.alt = alt; img.onload = () => img.style.opacity = 1; if (img.complete) img.style.opacity = 1; }, 180); }
-      // Dachform ins Formular übernehmen
+      $$('.rf, .rt', roofs).forEach(x => x.classList.toggle('on', x.dataset.roof === k));
+      const t = $(`.rt[data-roof="${k}"] h3`, roofs).textContent;
       const r = $$('#anfrage input[name=dachform]').find(x => x.value === t); if (r) r.checked = true;
       try { sessionStorage.setItem('bwm-dach', t); } catch (e) {}
     };
@@ -334,45 +257,35 @@
       b.addEventListener('click', () => setRoof(b.dataset.roof));
       b.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) { e.preventDefault(); setRoof(tabs[(i + d + tabs.length) % tabs.length].dataset.roof, true); } });
     });
-    $('.rm-flachdach', roofs).classList.add('on');
     if (motion) {
-      const len = 700;
-      gsap.fromTo(house, { strokeDasharray: len, strokeDashoffset: len }, { strokeDashoffset: 0, ease: 'none', scrollTrigger: { trigger: roofs, start: 'top 85%', end: 'top 35%', scrub: .8 }, onComplete: () => house.style.strokeDasharray = 'none' });
-      gsap.fromTo('.roof-draw', { y: 60, opacity: .3 }, { y: 0, opacity: 1, ease: 'none', scrollTrigger: { trigger: roofs, start: 'top 90%', end: 'top 45%', scrub: .8 } });
-      gsap.fromTo('.roof-info', { y: 90 }, { y: 0, ease: 'none', scrollTrigger: { trigger: roofs, start: 'top 90%', end: 'top 35%', scrub: .8 } });
+      gsap.fromTo('.roof-photo', { clipPath: 'inset(8% 10% 8% 10% round 60px)' }, { clipPath: 'inset(0% 0% 0% 0% round 28px)', ease: 'none', scrollTrigger: { trigger: roofs, start: 'top 90%', end: 'top 35%', scrub: .7 } });
+      gsap.fromTo('.roof-info', { y: 60 }, { y: 0, ease: 'none', scrollTrigger: { trigger: roofs, start: 'top 90%', end: 'top 35%', scrub: .7 } });
     }
   }
 
-  // ---------- Baustellen mit Maßlinien ----------
-  const bs = $('.bs');
-  if (bs) {
-    const figs = $$('.bs-f', bs), btns = $$('.bs-thumbs button', bs);
-    btns.forEach(b => b.addEventListener('click', () => {
-      const i = +b.dataset.i;
-      figs.forEach(f => f.classList.toggle('on', +f.dataset.i === i));
-      btns.forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    }));
+  // ---------- Referenzen: der Fotostapel fächert beim Scrollen auf ----------
+  const fan = $('.fan');
+  if (fan) {
+    const prints = $$('.print', fan);
+    // Auf dem Handy sind nur drei Abzüge sichtbar; die Positionen rechnen nur mit den sichtbaren
+    const place = () => {
+      const vis = prints.filter(p => p.offsetParent !== null), n = vis.length, mid = (n - 1) / 2;
+      const w = fan.clientWidth, pw = vis[0].offsetWidth, step = Math.min(pw * 1.02, (w - pw) / (n - 1));
+      return prints.map(p => { const i = vis.indexOf(p); return i < 0 ? { x: 0, y: 0, r: 0 } : { x: (i - mid) * step, y: Math.abs(i - mid) * 14, r: (i - mid) * 3 }; });
+    };
+    const mid = (prints.length - 1) / 2;
     if (motion) {
-      const tlb = gsap.timeline({ scrollTrigger: { trigger: bs, start: 'top 85%', end: 'top 30%', scrub: .8 } });
-      tlb.fromTo($('.bs-dim.h i', bs), { scaleX: 0 }, { scaleX: 1, ease: 'none', duration: 1 }, 0);
-      tlb.fromTo($('.bs-dim.v i', bs), { scaleY: 0 }, { scaleY: 1, ease: 'none', duration: 1 }, .1);
-      tlb.fromTo($('.bs-frame', bs), { scale: .9 }, { scale: 1, ease: 'power1.out', duration: 1 }, 0);
-      tlb.fromTo(btns, { x: 40, opacity: 0 }, { x: 0, opacity: (i, el) => el.getAttribute('aria-pressed') === 'true' ? 1 : .65, stagger: .08, duration: .5, clearProps: 'opacity' }, .3);
+      const tlf = gsap.timeline({ scrollTrigger: { trigger: fan, start: 'top 85%', end: 'top 25%', scrub: .8, invalidateOnRefresh: true } });
+      prints.forEach((p, i) => tlf.fromTo(p, { x: 0, y: 40, rotation: (i - mid) * -3 + (i % 2 ? 4 : -4) }, { x: () => place()[i].x, y: () => place()[i].y, rotation: () => place()[i].r, ease: 'power1.out', duration: 1 }, 0));
+    } else {
+      const pos = place(); prints.forEach((p, i) => p.style.transform = `translate(${pos[i].x}px, ${pos[i].y}px) rotate(${pos[i].r}deg)`);
     }
   }
 
-  // ---------- Selbst ausprobieren: Maßband wächst mit ----------
-  const tape = $('.tape i');
-  if (tape && motion) {
-    gsap.fromTo(tape, { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: { trigger: '.tools-list', start: 'top 75%', end: 'bottom 60%', scrub: .6 } });
-    $$('.tl').forEach(li => gsap.fromTo(li, { x: 30, opacity: 0 }, { x: 0, opacity: 1, ease: 'power2.out', scrollTrigger: { trigger: li, start: 'top 90%', end: 'top 70%', scrub: .6 } }));
-  }
-  // ---------- Anfrage-Blatt schiebt sich hoch ----------
-  const sheet = $('.ask .ask-sheet');
-  if (sheet && motion) {
-    gsap.fromTo(sheet, { y: 90, rotation: 1.2 }, { y: 0, rotation: 0, ease: 'none', scrollTrigger: { trigger: '.ask', start: 'top 90%', end: 'top 25%', scrub: .8 } });
-    gsap.fromTo($$('.reg', sheet), { scale: 2.2, opacity: 0 }, { scale: 1, opacity: 1, stagger: .05, ease: 'none', scrollTrigger: { trigger: '.ask', start: 'top 60%', end: 'top 25%', scrub: .8 } });
-  }
+  // ---------- Selbst ausprobieren: Fragen steigen nacheinander auf ----------
+  if (motion && $('.tools-list')) $$('.tools-list .tl').forEach((li, i) => gsap.fromTo(li, { y: 50, opacity: 0 }, { y: 0, opacity: 1, ease: 'power2.out', scrollTrigger: { trigger: li, start: 'top 95%', end: 'top 75%', scrub: .6 } }));
+  // ---------- Anfrage: die Sonne geht hinter dem Formular auf ----------
+  if (motion && $('.ask-sun')) gsap.fromTo('.ask-sun', { yPercent: 40, scale: .7 }, { yPercent: -10, scale: 1, ease: 'none', scrollTrigger: { trigger: '.ask', start: 'top bottom', end: 'center center', scrub: .8 } });
 
   // =================== WERKZEUGE ===================
   const chipGroup = (g, cb) => $$('.chip', g).forEach(c => c.addEventListener('click', () => {

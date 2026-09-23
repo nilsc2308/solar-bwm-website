@@ -26,11 +26,17 @@ const P = [ // Herstellerbilder (nur Freistellung, keine Bearbeitung)
   ['p-datenblatt', 'Jasolar-Datenblatt2-rotated.jpg', [787, 400]],
   ['p-modul', 'Jasolar-Datenblatt1-rotated.jpg', [789, 400]],
 ];
+const U = ['dach-vorher', 'daecher-region', 'freiflaeche', 'giebel-pv', 'haus-fertig', 'modul-tragen', 'module-himmel', 'module-nah', 'montage-haende', 'sicherungskasten', 'steinhaus-pv', 'wartung-module', 'ziegel-pv'];
 (async () => {
+  // Branchen-Fotos von Unsplash (Platzhalter): nur verkleinern
+  for (const n of U) for (const [suf, w, q] of [['-l', 1920, 68], ['-m', 900, 64]]) {
+    const info = await sharp('_quelle/unsplash/' + n + '.jpg').resize({ width: w, withoutEnlargement: true }).webp({ quality: q, smartSubsample: true, effort: 6 }).toFile(`img/${n}${suf}.webp`);
+    console.log(n + suf, info.width, info.height, Math.round(info.size / 1024) + 'KB');
+  }
   for (const [n, f, ws] of J) for (const [i, w] of ws.entries()) {
     const suf = ws.length > 1 ? (i ? '-m' : '-l') : '';
     const img = sharp(S + f).rotate().resize({ width: w, withoutEnlargement: true })
-      .modulate({ saturation: 1.06, brightness: 1.01 }).linear(1.05, -4).median(3).sharpen({ sigma: .6 });
+      .modulate({ saturation: 1.12, brightness: 1.1 }).linear(1.06, 6).median(3).sharpen({ sigma: .6 });
     const info = await img.webp({ quality: i ? 60 : 62, smartSubsample: true, effort: 6 }).toFile(`img/${n}${suf}.webp`);
     console.log(n + suf, info.width, info.height, Math.round(info.size / 1024) + 'KB');
   }

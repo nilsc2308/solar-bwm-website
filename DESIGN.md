@@ -33,3 +33,18 @@ Design-Read: Redesign einer WordPress-Standardseite (solar-bwm.com) eines kleine
 | Impressum | impressum.html |
 | Sprachwahl DE/NL/EN/FR (GTranslate) | bewusst weggelassen – Hinweis in der Checkliste |
 | Veranstaltungen-Plugin (leer) | weggelassen |
+
+
+---
+
+## 2. Fassung (23.9.2026 abends) – nach Nils' Kritik
+
+Nils: „Das Scroll-Through ist schlecht, der ganze Aufbau ist schlecht und das Design auch.“ Auf Nachfrage: Branchen-Fotos statt der grauen WhatsApp-Fotos, **hell und sonnig**, gestört haben **zu viele Abschnitte** und **zu technisch/trocken**. Neu:
+
+- **Leitidee: Sonne auf Ihrem Dach.** Freundlich für Hausbesitzer, keine Maßlinien, Schnittzeichnungen oder Stücklisten auf der Startseite.
+- **Design:** Weiß und Sand `#fbf7ef`, Sonnengelb `#f6b400` als einzige Akzentfarbe (Knöpfe mit dunkler Schrift), Bernstein `#8a5800` für Links, warmes Dunkel `#221f1a` nur im Fuß. Schrift **Figtree** (variabel, lokal), runde Formen: Knöpfe und Auswahl als Pillen, Karten 20–28 px.
+- **Kopfzeile:** weiß, Logo „Sonne über Modul“ + Schriftzug, Leistungen ▾ und Produkte ▾ mit Fotos, gelber Knopf „Anlage anfragen“.
+- **Szene (520vh) „Von Ihrem Dach zum eigenen Sonnenstrom“:** Ihr Dach → Erst planen wir → Dann montieren wir → Und schließen alles an → Ihr eigener Sonnenstrom. Helle Unsplash-Fotos, Text in einer weißen Karte unten links, die mit ihrem Text aus- und einblendet (nie leer, nie zwei Texte). Neue Blenden: **Sonnenaufgang** (Kreis steigt vom Horizont), **Sonnenstrahlen** (sechs Strahlen fächern aus der Ecke), **Dachschräge** (schräge Kante), **Giebel**. Fortschritt als fünf gelbe Striche in der Karte; Kapitel 2–4 verlinken auf die Leistung.
+- **Startseite nur noch sechs Abschnitte:** Satz mit Fotos im Text → Leistungen (Foto klebt links, vier Kapitel rechts) → Dachformen (Reiter, Foto, Text) → Referenzen als Fotostapel, der auffächert (echte BwM-Fotos, aufgehellt) → Selbst ausprobieren (8 Fragen) → Anfrage mit aufgehender Sonne.
+- **Unterseiten-Kopf „Sonnen-Kopf“:** Sandgrund, Titel links, rundes Foto rechts, hinter dem eine gelbe Sonne aufgeht.
+- Regler: Dichte 4, Kontrast 5, Bewegung 8 (Startseite).
